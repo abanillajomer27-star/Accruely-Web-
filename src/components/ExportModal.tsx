@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Printer, FileText } from 'lucide-react';
-import { CalculatorInputs, CalculatorResults } from '../types';
-import { generateLeaveStatementText } from '../utils/calculator';
+import { PLCalculatorInputs, PLCalculatorResults } from '../types';
+import { generatePLStatementText } from '../utils/calculator';
 
 interface ExportModalProps {
   isOpen: boolean;
-  inputs: CalculatorInputs;
-  results: CalculatorResults;
+  inputs: PLCalculatorInputs;
+  results: PLCalculatorResults;
   onClose: () => void;
 }
 
@@ -20,7 +20,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   if (!isOpen) return null;
 
-  const statementText = generateLeaveStatementText(inputs, results);
+  const statementText = generatePLStatementText(inputs, results);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(statementText);
@@ -39,7 +39,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="bg-orange-600 dark:bg-zinc-800 text-white px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-white" />
-            <h3 className="text-lg font-bold">Leave Accrual Statement</h3>
+            <h3 className="text-lg font-bold">PL Opening Balance Statement</h3>
           </div>
           <button
             onClick={onClose}

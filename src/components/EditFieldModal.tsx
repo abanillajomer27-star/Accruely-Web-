@@ -5,9 +5,9 @@ interface EditFieldModalProps {
   isOpen: boolean;
   title: string;
   initialValue: string | number;
-  type?: 'text' | 'number';
+  type?: 'text' | 'number' | 'date';
   step?: string;
-  min?: number;
+  min?: number | string;
   onClose: () => void;
   onSave: (value: string | number) => void;
 }
@@ -17,8 +17,8 @@ export const EditFieldModal: React.FC<EditFieldModalProps> = ({
   title,
   initialValue,
   type = 'number',
-  step = '0.0001',
-  min = 0,
+  step = 'any',
+  min,
   onClose,
   onSave,
 }) => {

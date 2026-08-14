@@ -8,6 +8,10 @@ import {
   CheckCircle2,
   HelpCircle,
   Sparkles,
+  RefreshCw,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   PLCalculatorInputs,
@@ -21,7 +25,7 @@ import {
 import { EditFieldModal } from './EditFieldModal';
 import { ExportModal } from './ExportModal';
 
-interface CalculatorViewProps {
+interface PLOpeningBalanceCalculatorViewProps {
   inputs: PLCalculatorInputs;
   results: PLCalculatorResults;
   onChangeInput: (updater: (prev: PLCalculatorInputs) => PLCalculatorInputs) => void;
@@ -35,7 +39,7 @@ interface ModalState {
   type: 'text' | 'number' | 'date';
 }
 
-export const CalculatorView: React.FC<CalculatorViewProps> = ({
+export const PLOpeningBalanceCalculatorView: React.FC<PLOpeningBalanceCalculatorViewProps> = ({
   inputs,
   results,
   onChangeInput,
@@ -49,6 +53,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
   });
 
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isCalculationsOpen, setIsCalculationsOpen] = useState(true);
 
   const openEditModal = (
     title: string,
@@ -190,12 +195,12 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
   const isNewDateDerived = Boolean(inputs.newPeriod.commencementDate && inputs.newPeriod.calculationDate);
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 animate-fadeIn">
       {/* 1. EMPLOYEE & SERVICE PARAMETERS */}
       <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
         {/* Banner Header */}
         <div className="bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between">
-          <span>EMPLOYEE & SERVICE PARAMETERS</span>
+          <span>1. EMPLOYEE & SERVICE PARAMETERS</span>
           <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
             Entitlement Periods & Hours
           </span>
@@ -307,12 +312,57 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
               </div>
             </div>
 
+            {/* Completed Years (Old Rate) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Completed Years (Old Rate)
+              </label>
+              <button
+                id="btn-edit-old-completed-years-sec1"
+                onClick={() =>
+                  openEditModal(
+                    'Completed Years (Old Rate)',
+                    'oldPeriod.completedYears',
+                    inputs.oldPeriod.completedYears,
+                    'number'
+                  )
+                }
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-orange-100/80 border border-orange-200 hover:border-orange-400 dark:bg-zinc-800 dark:border-zinc-700 rounded-xl text-orange-950 dark:text-zinc-100 font-bold text-xs sm:text-sm transition-all cursor-pointer min-w-[140px]"
+              >
+                <span>{formatNum(inputs.oldPeriod.completedYears, 2)} yrs</span>
+                <Pencil className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+              </button>
+            </div>
+
+            {/* Remaining Weeks (Old Rate) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Remaining Weeks (Old Rate)
+              </label>
+              <button
+                id="btn-edit-old-remaining-weeks-sec1"
+                onClick={() =>
+                  openEditModal(
+                    'Remaining Weeks (Old Rate)',
+                    'oldPeriod.remainingWeeks',
+                    inputs.oldPeriod.remainingWeeks,
+                    'number'
+                  )
+                }
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-orange-100/80 border border-orange-200 hover:border-orange-400 dark:bg-zinc-800 dark:border-zinc-700 rounded-xl text-orange-950 dark:text-zinc-100 font-bold text-xs sm:text-sm transition-all cursor-pointer min-w-[140px]"
+              >
+                <span>{formatNum(inputs.oldPeriod.remainingWeeks, 4)} wks</span>
+                <Pencil className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+              </button>
+            </div>
+
             {/* Annual Personal Leave Entitlement (Old Rate) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
               <label className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                 Annual Personal Leave Entitlement (Old Rate)
               </label>
               <button
+                id="btn-edit-old-annual-entitlement-sec1"
                 onClick={() =>
                   openEditModal(
                     'Annual Personal Leave Entitlement (Old Rate) (hrs)',
@@ -379,12 +429,57 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
               </div>
             </div>
 
+            {/* Completed Years (New Rate) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Completed Years (New Rate)
+              </label>
+              <button
+                id="btn-edit-new-completed-years-sec1"
+                onClick={() =>
+                  openEditModal(
+                    'Completed Years (New Rate)',
+                    'newPeriod.completedYears',
+                    inputs.newPeriod.completedYears,
+                    'number'
+                  )
+                }
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-orange-100/80 border border-orange-200 hover:border-orange-400 dark:bg-zinc-800 dark:border-zinc-700 rounded-xl text-orange-950 dark:text-zinc-100 font-bold text-xs sm:text-sm transition-all cursor-pointer min-w-[140px]"
+              >
+                <span>{formatNum(inputs.newPeriod.completedYears, 2)} yrs</span>
+                <Pencil className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+              </button>
+            </div>
+
+            {/* Remaining Weeks (New Rate) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Remaining Weeks (New Rate)
+              </label>
+              <button
+                id="btn-edit-new-remaining-weeks-sec1"
+                onClick={() =>
+                  openEditModal(
+                    'Remaining Weeks (New Rate)',
+                    'newPeriod.remainingWeeks',
+                    inputs.newPeriod.remainingWeeks,
+                    'number'
+                  )
+                }
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-orange-100/80 border border-orange-200 hover:border-orange-400 dark:bg-zinc-800 dark:border-zinc-700 rounded-xl text-orange-950 dark:text-zinc-100 font-bold text-xs sm:text-sm transition-all cursor-pointer min-w-[140px]"
+              >
+                <span>{formatNum(inputs.newPeriod.remainingWeeks, 4)} wks</span>
+                <Pencil className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+              </button>
+            </div>
+
             {/* Annual Personal Leave Entitlement (New Rate) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
               <label className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                 Annual Personal Leave Entitlement (New Rate)
               </label>
               <button
+                id="btn-edit-new-annual-entitlement-sec1"
                 onClick={() =>
                   openEditModal(
                     'Annual Personal Leave Entitlement (New Rate) (hrs)',
@@ -407,9 +502,9 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
         {/* Banner Header */}
         <div className="bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between">
-          <span>SERVICE & LEAVE ACCRUED</span>
+          <span>2. SERVICE & LEAVE ACCRUED</span>
           <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
-            Independent Rate Calculations
+            Old & New Rate Calculation
           </span>
         </div>
 
@@ -432,11 +527,11 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                  Completed Years of Service (Old Rate)
+                  Completed Years of Service
                 </span>
                 {isOldDateDerived && (
                   <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Auto-calculated from anniversary dates
+                    Auto-calculated from full anniversaries
                   </span>
                 )}
               </div>
@@ -459,7 +554,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Additional Year Hours (Old Rate) (auto-calculated) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Additional Year Hours (Old Rate)
+                Additional Year Hours (automatic)
               </span>
               <div className="px-4 py-2 bg-orange-50/60 dark:bg-zinc-900/80 border border-orange-200/70 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.oldRate.additionalYearHours, 4)} hrs
@@ -470,7 +565,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                  Remaining Weeks (Old Rate)
+                  Remaining Weeks
                 </span>
                 {isOldDateDerived && (
                   <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -497,7 +592,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Weekly Accrual Rate (Old Rate) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Weekly Accrual Rate (Old Rate)
+                Weekly Accrual Rate (Entitlement ÷ 52)
               </span>
               <div className="px-4 py-2 bg-orange-50/60 dark:bg-zinc-900/80 border border-orange-200/70 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.oldRate.weeklyAccrualRate, 4)} hrs/wk
@@ -507,7 +602,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Remaining Weeks Hours (Old Rate) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Remaining Weeks Hours (Old Rate)
+                Remaining Weeks Hours
               </span>
               <div className="px-4 py-2 bg-orange-50/60 dark:bg-zinc-900/80 border border-orange-200/70 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.oldRate.remainingWeeksHours, 4)} hrs
@@ -543,11 +638,11 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                  Completed Years of Service (New Rate)
+                  Completed Years of Service
                 </span>
                 {isNewDateDerived && (
                   <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Auto-calculated from anniversary dates
+                    Auto-calculated from full anniversaries
                   </span>
                 )}
               </div>
@@ -570,7 +665,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Additional Year Hours (New Rate) (auto-calculated) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Additional Year Hours (New Rate)
+                Additional Year Hours (automatic)
               </span>
               <div className="px-4 py-2 bg-orange-50/60 dark:bg-zinc-900/80 border border-orange-200/70 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.newRate.additionalYearHours, 4)} hrs
@@ -581,7 +676,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                  Remaining Weeks (New Rate)
+                  Remaining Weeks
                 </span>
                 {isNewDateDerived && (
                   <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -608,7 +703,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Weekly Accrual Rate (New Rate) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Weekly Accrual Rate (New Rate)
+                Weekly Accrual Rate (Entitlement ÷ 52)
               </span>
               <div className="px-4 py-2 bg-orange-50/60 dark:bg-zinc-900/80 border border-orange-200/70 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.newRate.weeklyAccrualRate, 4)} hrs/wk
@@ -618,7 +713,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Remaining Weeks Hours (New Rate) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Remaining Weeks Hours (New Rate)
+                Remaining Weeks Hours
               </span>
               <div className="px-4 py-2 bg-orange-50/60 dark:bg-zinc-900/80 border border-orange-200/70 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.newRate.remainingWeeksHours, 4)} hrs
@@ -646,7 +741,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
                 </h3>
               </div>
               <p className="text-xs text-orange-100 opacity-90 mt-0.5">
-                Old Rate Total ({formatNum(results.oldRate.totalLeaveEarned, 2)} hrs) + New Rate Total ({formatNum(results.newRate.totalLeaveEarned, 2)} hrs)
+                Old Total ({formatNum(results.oldRate.totalLeaveEarned, 2)} hrs) + New Total ({formatNum(results.newRate.totalLeaveEarned, 2)} hrs)
               </p>
             </div>
             <div className="text-left sm:text-right">
@@ -662,7 +757,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
         {/* Banner Header */}
         <div className="bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between">
-          <span>PERSONAL LEAVE TAKEN / USED</span>
+          <span>3. PERSONAL LEAVE TAKEN / USED</span>
           <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
             Historical System Deductions
           </span>
@@ -769,7 +864,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
         {/* Banner Header */}
         <div className="bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase">
-          TARGET ENTITLEMENT BALANCE
+          4. TARGET ENTITLEMENT BALANCE
         </div>
 
         <div className="p-4 sm:p-5 space-y-4">
@@ -777,7 +872,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
           <div className="p-5 bg-white dark:bg-zinc-800/90 rounded-2xl border-2 border-orange-300 dark:border-orange-600/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <span className="text-xs sm:text-sm font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider block">
-                Target Balance
+                Target Personal Leave Balance
               </span>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 Grand Total Earned ({formatNum(results.grandTotalLeaveEarned, 2)} hrs) − Total Used ({formatNum(results.totalLeaveUsed, 2)} hrs)
@@ -794,7 +889,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-4 bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-orange-200/60 dark:border-zinc-700">
               <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 block mb-1">
-                Equivalent in Days ({inputs.standardHoursPerDay} hrs/day)
+                Equivalent Days ({inputs.standardHoursPerDay} hrs/day)
               </span>
               <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                 {formatNum(results.targetBalanceDays, 2)} <span className="text-sm font-medium text-zinc-500">days</span>
@@ -803,7 +898,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
 
             <div className="p-4 bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-orange-200/60 dark:border-zinc-700">
               <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 block mb-1">
-                Equivalent in Weeks ({inputs.standardHoursPerDay * 5} hrs/wk)
+                Equivalent Weeks ({inputs.standardHoursPerDay * 5} hrs/wk)
               </span>
               <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                 {formatNum(results.targetBalanceWeeks, 2)} <span className="text-sm font-medium text-zinc-500">weeks</span>
@@ -817,7 +912,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
         {/* Banner Header */}
         <div className="bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between">
-          <span>XERO PL BALANCE CHECKER</span>
+          <span>5. XERO PL BALANCE CHECKER</span>
           <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
             Opening Balance Adjustment
           </span>
@@ -828,7 +923,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
           <div className="p-5 bg-gradient-to-br from-amber-500 via-orange-600 to-orange-700 text-white rounded-2xl shadow-md space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-orange-100">
-                Updated (Recommended Opening Balance Adjustment)
+                Updated Balance (Enter this into Xero)
               </span>
               <CheckCircle2 className="w-5 h-5 text-orange-200" />
             </div>
@@ -871,14 +966,12 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
             {/* Target Balance (linked from Target Entitlement Balance) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
-                <label className="text-sm sm:text-base font-semibold text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
                   Target Balance
                 </label>
-                <span className="text-[11px] font-medium text-orange-700 dark:text-orange-400 bg-orange-100/80 dark:bg-zinc-800 px-2 py-0.5 rounded">
-                  Linked
-                </span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">(Linked)</span>
               </div>
-              <div className="px-4 py-2 bg-white/80 dark:bg-zinc-800/80 border border-orange-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 font-bold text-sm sm:text-base text-right min-w-[140px]">
+              <div className="px-4 py-2 bg-orange-100/60 dark:bg-zinc-800 border border-orange-200 dark:border-zinc-700 rounded-xl text-orange-950 dark:text-orange-400 font-extrabold text-sm sm:text-base text-right min-w-[140px]">
                 {formatNum(results.targetBalance, 4)} hrs
               </div>
             </div>
@@ -891,7 +984,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
               <button
                 onClick={() =>
                   openEditModal(
-                    'Current Xero Personal Leave Balance (hrs)',
+                    'Current Xero Balance (hrs)',
                     'currentXeroBalance',
                     inputs.currentXeroBalance,
                     'number'
@@ -907,18 +1000,145 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
         </div>
       </div>
 
-      {/* Export & Action Floating / Bottom Bar */}
-      <div className="flex items-center justify-end gap-3 pt-2">
+      {/* 6. CALCULATIONS (HOW IT WORKS) */}
+      <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
+        {/* Banner Header with Collapsible Toggle */}
+        <button
+          onClick={() => setIsCalculationsOpen((prev) => !prev)}
+          className="w-full bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between text-left cursor-pointer hover:bg-orange-700 dark:hover:bg-orange-800 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-orange-200" />
+            <span>6. CALCULATIONS (HOW IT WORKS)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
+              Fair Work & NES Formula Logic
+            </span>
+            {isCalculationsOpen ? (
+              <ChevronUp className="w-5 h-5 text-orange-200" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-orange-200" />
+            )}
+          </div>
+        </button>
+
+        {isCalculationsOpen && (
+          <div className="p-4 sm:p-5 space-y-4 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200">
+            {/* Step 1 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                1. Completed Years of Service
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Counts only full completed anniversaries between Commencement Date and Calculation Date. If dates are provided, this is auto-calculated. If either date is blank or you wish to override, you can manually tap and edit this field.
+              </p>
+              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
+                Completed Years = Full completed anniversaries only
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                2. Additional Year Hours
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Calculates the total entitlement for all completed full anniversary years.
+              </p>
+              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
+                Additional Year Hours = Completed Years × Annual Entitlement (e.g. 13 × 76 = 988 hrs)
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                3. Weekly Accrual Rate
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Converts annual personal leave entitlement into a weekly accrual rate.
+              </p>
+              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
+                Weekly Accrual Rate = Annual Entitlement ÷ 52 (e.g. 76 ÷ 52 = 1.461538... hrs/wk)
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                4. Remaining Weeks
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Calculates the pro-rata weeks since the last anniversary date. Auto-calculated when dates are provided, and fully editable for manual override.
+              </p>
+              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
+                Remaining Weeks = Days since last anniversary ÷ 7
+              </div>
+            </div>
+
+            {/* Step 5 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                5. Remaining Weeks Hours
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Calculates the leave accrued during the partial year after the last anniversary.
+              </p>
+              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
+                Remaining Weeks Hours = Remaining Weeks × Weekly Accrual Rate
+              </div>
+            </div>
+
+            {/* Step 6 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                6. Total Leave Earned (Per Period)
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Sum of anniversary year hours and remaining weeks hours for that rate period.
+              </p>
+              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
+                Total Leave Earned = Additional Year Hours + Remaining Weeks Hours
+              </div>
+            </div>
+
+            {/* Step 7 */}
+            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
+              <h4 className="font-bold text-orange-950 dark:text-orange-400">
+                7. Grand Total Leave Earned & Target Balance
+              </h4>
+              <p className="text-zinc-600 dark:text-zinc-300">
+                Combines both entitlement periods and subtracts all historical personal leave taken.
+              </p>
+              <div className="space-y-1 font-mono text-xs text-orange-900 dark:text-orange-300">
+                <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1 rounded">
+                  Grand Total Leave Earned = Old Rate Total + New Rate Total
+                </div>
+                <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1 rounded">
+                  Target Balance = Grand Total Leave Earned − Total Personal Leave Used
+                </div>
+                <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1 rounded">
+                  Updated Balance (Xero) = Current Opening in Xero + Target Balance − Current Xero Balance
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Share / Export Action Button */}
+      <div className="flex justify-center pt-2">
         <button
           onClick={() => setIsExportOpen(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-2.5 px-6 py-3.5 bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700 text-white font-bold text-base rounded-2xl shadow-md transition-all active:scale-98 cursor-pointer"
         >
           <Share2 className="w-5 h-5" />
-          <span>Export / Share Statement</span>
+          <span>Export & Share PL Statement</span>
         </button>
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Field Modal */}
       <EditFieldModal
         isOpen={modal.isOpen}
         title={modal.title}
@@ -928,7 +1148,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
         onSave={handleSaveModal}
       />
 
-      {/* Export Modal */}
+      {/* Export Statement Modal */}
       <ExportModal
         isOpen={isExportOpen}
         inputs={inputs}

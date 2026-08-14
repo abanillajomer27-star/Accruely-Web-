@@ -1,47 +1,113 @@
 export type PayFrequency = 'Weekly' | 'Fortnightly' | 'Monthly' | 'Bi-Monthly';
 
-export type AccrualProfile =
+export type LeaveAccrualProfile =
   | 'Australian NES Full-Time'
   | 'Australian NES Part-Time (Pro-rata)'
   | 'Casual Employee'
   | 'Custom Company Policy';
 
-export interface CalculatorInputs {
+// --- LEAVE ACCRUAL CALCULATOR TYPES ---
+export interface LeaveAccrualInputs {
   employeeName: string;
-  profile: AccrualProfile;
+  profile: LeaveAccrualProfile;
   payFrequency: PayFrequency;
   standardHoursPerDay: number;
+  totalHoursForPeriod: number;
   ordinaryHours: number;
   publicHolidayHours: number;
   annualLeaveTaken: number;
   personalLeaveTaken: number;
-  totalHoursForPeriod: number;
+  
+  // Rate override toggle & custom values
   overrideDefaultRates: boolean;
-  customAlRate: number;
-  customPlRate: number;
-  openingAnnualLeave: number;
-  openingPersonalLeave: number;
-  customWeeksAnnualLeave?: number;
-  customDaysPersonalLeave?: number;
+  customAnnualLeaveAccrualRate: number;
+  customPersonalLeaveAccrualRate: number;
+  
+  // Balances
+  annualLeaveOpeningBalance: number;
+  personalLeaveOpeningBalance: number;
+
+  // Legacy/optional fields
+  standardHoursPerWeek?: number;
+  annualLeaveWeeksPerYear?: number;
+  personalLeaveDaysPerYear?: number;
 }
 
-export interface CalculatorResults {
+export interface LeaveAccrualResults {
   totalPaidHours: number;
   leaveWithoutPayHours: number;
-  alAccrualRate: number;
-  plAccrualRate: number;
-  alAccruedThisPay: number;
-  alAvailable: number;
-  alClosingBalance: number;
-  plAccruedThisPay: number;
-  plAvailable: number;
-  plClosingBalance: number;
+  totalAccruableHours: number;
+  
+  // Annual Leave
+  annualLeaveAccrualRate: number; // 4/52 = 0.0769230769
+  annualLeaveAccrued: number;     // Total Paid Hours × Rate
+  availableAnnualLeave: number;   // Opening + Accrued
+  annualLeaveClosingBalance: number; // Available - Taken
+  
+  // Personal Leave
+  personalLeaveAccrualRate: number; // 10/260 = 0.0384615385
+  personalLeaveAccrued: number;     // Total Paid Hours × Rate
+  availablePersonalLeave: number;   // Opening + Accrued
+  personalLeaveClosingBalance: number; // Available - Taken
 }
 
+// --- PL OPENING BALANCE CALCULATOR TYPES ---
+export interface EntitlementPeriodData {
+  commencementDate: string; // YYYY-MM-DD or empty
+  calculationDate: string;  // YYYY-MM-DD or empty
+  annualEntitlement: number; // in hours (default 76.00 hrs)
+  completedYears: number;   // full anniversaries
+  remainingWeeks: number;   // weeks after last anniversary
+}
+
+export interface PLCalculatorInputs {
+  employeeName: string;
+  standardHoursPerDay: number;
+  
+  // Old Entitlement Period
+  oldPeriod: EntitlementPeriodData;
+
+  // New Entitlement Period
+  newPeriod: EntitlementPeriodData;
+
+  // Personal Leave Taken / Used
+  leaveUsedPreMYOB: number;
+  leaveUsedMYOB: number;
+  leaveUsedXero: number;
+  leaveUsedOther: number;
+
+  // Xero PL Balance Checker
+  currentOpeningBalanceXero: number;
+  currentXeroBalance: number;
+}
+
+export interface PeriodAccrualResults {
+  completedYears: number;
+  annualEntitlement: number;
+  weeklyAccrualRate: number;    // Annual Entitlement ÷ 52
+  additionalYearHours: number;  // Completed Years × Annual Entitlement
+  remainingWeeks: number;
+  remainingWeeksHours: number;  // Remaining Weeks × Weekly Accrual Rate
+  totalLeaveEarned: number;     // Additional Year Hours + Remaining Weeks Hours
+}
+
+export interface PLCalculatorResults {
+  oldRate: PeriodAccrualResults;
+  newRate: PeriodAccrualResults;
+  grandTotalLeaveEarned: number; // Old Total + New Total
+  totalLeaveUsed: number;        // Pre-MYOB + MYOB + Xero + Other
+  targetBalance: number;         // Grand Total Leave Earned - Total Leave Used
+  targetBalanceDays: number;     // Target Balance ÷ Standard Hours Per Day
+  targetBalanceWeeks: number;    // Target Balance ÷ (Standard Hours Per Day × 5)
+  xeroUpdatedBalance: number;    // Current Opening in Xero + Target Balance - Current Xero Balance
+}
+
+// --- APP & SETTINGS TYPES ---
 export interface SettingsPreferences {
   defaultStandardHoursPerDay: number;
-  defaultPayFrequency: PayFrequency;
+  defaultAnnualEntitlementHours: number;
+  defaultAnnualLeaveWeeks: number;
   theme: 'System Default' | 'Light Theme' | 'Dark Theme' | 'Light' | 'Dark';
 }
 
-export type ActiveTab = 'calculator' | 'settings' | 'about';
+export type ActiveTab = 'leave-accrual' | 'pl-opening-balance' | 'settings' | 'about';

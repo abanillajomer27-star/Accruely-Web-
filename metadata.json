@@ -1,6 +1,6 @@
 {
   "name": "Accruely",
-  "description": "Australian Leave Accrual Calculator following NES standards.",
+  "description": "Australian leave accrual calculator and PL opening balance calculator with dual entitlement periods and Xero reconciliation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

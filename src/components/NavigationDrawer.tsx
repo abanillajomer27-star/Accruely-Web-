@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, Settings, Info, X, LogOut } from 'lucide-react';
+import { Calculator, Scale, Settings, Info, X, LogOut, FileSpreadsheet } from 'lucide-react';
 import { ActiveTab } from '../types';
 
 interface NavigationDrawerProps {
@@ -43,7 +43,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             Accruely
           </h2>
           <p className="text-sm font-medium text-orange-100 dark:text-zinc-300 mb-2">
-            Australian Leave Accrual Calculator
+            Australian Leave & Entitlement Tools
           </p>
           <p className="text-xs text-orange-200 dark:text-zinc-400">
             Made by Jomer Abanilla, CFMS
@@ -52,31 +52,65 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
 
         {/* Navigation Items */}
         <nav className="flex-1 p-4 space-y-2 bg-white dark:bg-zinc-900 overflow-y-auto">
+          <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            Calculators
+          </div>
+
+          {/* Leave Accrual Calculator */}
           <button
             onClick={() => {
-              onSelectTab('calculator');
+              onSelectTab('leave-accrual');
               onClose();
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-semibold text-base transition-all text-left cursor-pointer ${
-              activeTab === 'calculator'
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-base transition-all text-left cursor-pointer ${
+              activeTab === 'leave-accrual'
                 ? 'bg-orange-100 text-orange-950 dark:bg-zinc-800 dark:text-orange-400 shadow-sm'
                 : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
             }`}
           >
             <Calculator
               className={`w-5 h-5 ${
-                activeTab === 'calculator' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
+                activeTab === 'leave-accrual' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
               }`}
             />
-            <span>Leave Accrual Calculator</span>
+            <span className="text-sm font-bold">Leave Accrual Calculator</span>
           </button>
+
+          {/* PL Opening Balance Calculator */}
+          <button
+            onClick={() => {
+              onSelectTab('pl-opening-balance');
+              onClose();
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-base transition-all text-left cursor-pointer ${
+              activeTab === 'pl-opening-balance'
+                ? 'bg-orange-100 text-orange-950 dark:bg-zinc-800 dark:text-orange-400 shadow-sm'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+            }`}
+          >
+            <Scale
+              className={`w-5 h-5 ${
+                activeTab === 'pl-opening-balance' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
+              }`}
+            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold">PL Opening Balance</span>
+              <span className="px-1.5 py-0.5 bg-orange-600 text-white dark:bg-orange-500 rounded text-[9px] font-bold uppercase">
+                NEW
+              </span>
+            </div>
+          </button>
+
+          <div className="pt-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            Preferences & Support
+          </div>
 
           <button
             onClick={() => {
               onSelectTab('settings');
               onClose();
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-semibold text-base transition-all text-left cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all text-left cursor-pointer ${
               activeTab === 'settings'
                 ? 'bg-orange-100 text-orange-950 dark:bg-zinc-800 dark:text-orange-400 shadow-sm'
                 : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
@@ -95,7 +129,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               onSelectTab('about');
               onClose();
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-semibold text-base transition-all text-left cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all text-left cursor-pointer ${
               activeTab === 'about'
                 ? 'bg-orange-100 text-orange-950 dark:bg-zinc-800 dark:text-orange-400 shadow-sm'
                 : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
@@ -106,7 +140,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 activeTab === 'about' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
               }`}
             />
-            <span>About Accruely</span>
+            <span>About Accruely & NES</span>
           </button>
 
           {onRequestExit && (
@@ -116,7 +150,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   onClose();
                   onRequestExit();
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-full font-semibold text-base transition-all text-left cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all text-left cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
               >
                 <LogOut className="w-5 h-5 text-red-500 dark:text-red-400" />
                 <span>Exit Accruely</span>
@@ -128,11 +162,10 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
         {/* Footer info inside drawer */}
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 text-center">
           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-            Accruely v1.0 • NES Compliant
+            Accruely v2.0 • NES Compliant
           </p>
         </div>
       </div>
     </div>
   );
 };
-
