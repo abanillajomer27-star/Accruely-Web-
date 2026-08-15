@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, Scale, Clock, Settings, Info, X, LogOut } from 'lucide-react';
+import { Calculator, Scale, Clock, Settings, Info, X } from 'lucide-react';
 import { ActiveTab } from '../types';
 
 interface NavigationDrawerProps {
@@ -7,7 +7,6 @@ interface NavigationDrawerProps {
   activeTab: ActiveTab;
   onClose: () => void;
   onSelectTab: (tab: ActiveTab) => void;
-  onRequestExit?: () => void;
 }
 
 export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
@@ -15,7 +14,6 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   activeTab,
   onClose,
   onSelectTab,
-  onRequestExit,
 }) => {
   if (!isOpen) return null;
 
@@ -42,11 +40,8 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
           <h2 className="text-3xl font-bold tracking-tight text-white mb-1">
             Accruely
           </h2>
-          <p className="text-sm font-medium text-orange-100 dark:text-zinc-300 mb-2">
-            Australian Leave & Entitlement Tools
-          </p>
-          <p className="text-xs text-orange-200 dark:text-zinc-400">
-            Made by Jomer Abanilla, CFMS
+          <p className="text-sm font-medium text-orange-100 dark:text-zinc-300">
+            Australian Payroll Tools
           </p>
         </div>
 
@@ -160,23 +155,8 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 activeTab === 'about' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
               }`}
             />
-            <span>About Accruely & NES</span>
+            <span>About Accruely</span>
           </button>
-
-          {onRequestExit && (
-            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 mt-2">
-              <button
-                onClick={() => {
-                  onClose();
-                  onRequestExit();
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all text-left cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-              >
-                <LogOut className="w-5 h-5 text-red-500 dark:text-red-400" />
-                <span>Exit Accruely</span>
-              </button>
-            </div>
-          )}
         </nav>
 
         {/* Footer info inside drawer */}

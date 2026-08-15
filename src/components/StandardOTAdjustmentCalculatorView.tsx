@@ -3,7 +3,6 @@ import {
   Pencil,
   Share2,
   Calculator,
-  Sparkles,
   Info,
   Clock,
   ChevronDown,
@@ -113,7 +112,7 @@ export const StandardOTAdjustmentCalculatorView: React.FC<
       {/* 1. QUICK PRESETS */}
       <div className="bg-white dark:bg-zinc-900 border border-orange-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
             Quick Presets
           </h2>

@@ -21,8 +21,6 @@ import { PLOpeningBalanceCalculatorView } from './components/PLOpeningBalanceCal
 import { StandardOTAdjustmentCalculatorView } from './components/StandardOTAdjustmentCalculatorView';
 import { SettingsView } from './components/SettingsView';
 import { AboutView } from './components/AboutView';
-import { EditFieldModal } from './components/EditFieldModal';
-import { ExitConfirmationModal } from './components/ExitConfirmationModal';
 
 const DEFAULT_LEAVE_ACCRUAL_INPUTS: LeaveAccrualInputs = {
   employeeName: 'John Smith',
@@ -83,7 +81,6 @@ const DEFAULT_SETTINGS: SettingsPreferences = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('pl-opening-balance');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
   // Leave Accrual Inputs
   const [leaveAccrualInputs, setLeaveAccrualInputs] = useState<LeaveAccrualInputs>(() => {
@@ -143,18 +140,6 @@ export default function App() {
     return DEFAULT_SETTINGS;
   });
 
-  const [settingsModal, setSettingsModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    key: keyof SettingsPreferences | null;
-    value: number;
-  }>({
-    isOpen: false,
-    title: '',
-    key: null,
-    value: 7.6,
-  });
-
   // Save to localStorage
   useEffect(() => {
     localStorage.setItem('accruely_leave_accrual_inputs', JSON.stringify(leaveAccrualInputs));
@@ -171,35 +156,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('accruely_settings', JSON.stringify(settings));
   }, [settings]);
-
-  // Web Browser beforeunload event
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = 'Do you want to close Accruely?';
-      return 'Do you want to close Accruely?';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
-
-  // Android Back Button / Back Gesture / History popstate handler
-  useEffect(() => {
-    window.history.pushState({ app: 'accruely' }, '', window.location.href);
-
-    const handlePopState = () => {
-      window.history.pushState({ app: 'accruely' }, '', window.location.href);
-      setIsExitModalOpen(true);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
 
   // Apply Theme
   useEffect(() => {
@@ -298,20 +254,6 @@ export default function App() {
     }
   };
 
-  const handleConfirmExit = () => {
-    setIsExitModalOpen(false);
-    if ((navigator as any).app && typeof (navigator as any).app.exitApp === 'function') {
-      (navigator as any).app.exitApp();
-      return;
-    }
-    try {
-      window.close();
-    } catch (e) {
-      // fallback
-    }
-    window.location.href = 'about:blank';
-  };
-
   // Calculations
   const leaveAccrualResults: LeaveAccrualResults = calculateLeaveAccrual(leaveAccrualInputs);
   const plResults: PLCalculatorResults = calculatePLOpeningBalance(plInputs);
@@ -332,7 +274,6 @@ export default function App() {
         activeTab={activeTab}
         onClose={() => setIsDrawerOpen(false)}
         onSelectTab={(tab) => setActiveTab(tab)}
-        onRequestExit={() => setIsExitModalOpen(true)}
       />
 
       <main className="flex-1 w-full max-w-xl mx-auto px-3.5 sm:px-4 pt-4 sm:pt-6">
@@ -364,40 +305,11 @@ export default function App() {
           <SettingsView
             settings={settings}
             onChangeSetting={handleChangeSetting}
-            onOpenEditModal={(title, key, val) =>
-              setSettingsModal({
-                isOpen: true,
-                title,
-                key,
-                value: val,
-              })
-            }
           />
         )}
 
         {activeTab === 'about' && <AboutView />}
       </main>
-
-      {/* Settings Modal */}
-      <EditFieldModal
-        isOpen={settingsModal.isOpen}
-        title={settingsModal.title}
-        initialValue={settingsModal.value}
-        type="number"
-        onClose={() => setSettingsModal((prev) => ({ ...prev, isOpen: false }))}
-        onSave={(val) => {
-          if (settingsModal.key) {
-            handleChangeSetting(settingsModal.key, Number(val));
-          }
-        }}
-      />
-
-      {/* Exit Confirmation Modal */}
-      <ExitConfirmationModal
-        isOpen={isExitModalOpen}
-        onConfirmExit={handleConfirmExit}
-        onCancel={() => setIsExitModalOpen(false)}
-      />
     </div>
   );
 }
