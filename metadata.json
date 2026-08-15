@@ -1,6 +1,6 @@
 {
   "name": "Accruely",
-  "description": "Australian leave accrual calculator and PL opening balance calculator with dual entitlement periods and Xero reconciliation.",
+  "description": "Australian payroll suite featuring Leave Accrual, PL Opening Balance with dual entitlement reconciliation, and Standard OT Adjustment calculators.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -110,4 +110,25 @@ export interface SettingsPreferences {
   theme: 'System Default' | 'Light Theme' | 'Dark Theme' | 'Light' | 'Dark';
 }
 
-export type ActiveTab = 'leave-accrual' | 'pl-opening-balance' | 'settings' | 'about';
+// --- STANDARD OT ADJUSTMENT CALCULATOR TYPES ---
+export interface StandardOTAdjustmentInputs {
+  employeeName: string;
+  standardOrdinaryHours: number; // e.g. 38 or 44
+  standardOT: number;            // e.g. 2
+  lwopDays: number;              // e.g. 0, 1, 2, 0.5
+}
+
+export interface StandardOTAdjustmentResults {
+  standardHoursPerDay: number;   // Standard Ordinary Hours ÷ 5
+  lwopHours: number;             // LWOP Days × Standard Hours Per Day
+  ordinaryHoursWorked: number;   // Standard Ordinary Hours − LWOP Hours
+  attendancePercentage: number;  // Ordinary Hours Worked ÷ Standard Ordinary Hours
+  adjustedStandardOT: number;    // Standard OT × Attendance Percentage
+}
+
+export type ActiveTab =
+  | 'leave-accrual'
+  | 'pl-opening-balance'
+  | 'standard-ot-adjustment'
+  | 'settings'
+  | 'about';

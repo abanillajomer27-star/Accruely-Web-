@@ -21,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Leave Accrual Calculator';
       case 'pl-opening-balance':
         return 'PL Opening Balance Calculator';
+      case 'standard-ot-adjustment':
+        return 'Standard OT Adjustment Calculator';
       case 'settings':
         return 'Settings & Preferences';
       case 'about':
@@ -30,17 +32,20 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const isCalculatorTab = activeTab === 'leave-accrual' || activeTab === 'pl-opening-balance';
+  const isCalculatorTab =
+    activeTab === 'leave-accrual' ||
+    activeTab === 'pl-opening-balance' ||
+    activeTab === 'standard-ot-adjustment';
 
   return (
     <header className="bg-orange-600 dark:bg-zinc-900 text-white shadow-md sticky top-0 z-30 border-b border-orange-700 dark:border-zinc-800 transition-colors">
       <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between min-h-[64px]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {!isCalculatorTab ? (
             <button
-              onClick={() => onSelectTab('pl-opening-balance')}
+              onClick={() => onSelectTab('standard-ot-adjustment')}
               aria-label="Back to calculator"
-              className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center cursor-pointer"
+              className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center cursor-pointer shrink-0"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
@@ -48,20 +53,22 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenMenu}
               aria-label="Open menu"
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer shrink-0"
             >
               <Menu className="w-7 h-7" />
             </button>
           )}
 
-          <div>
-            <h1 className="text-base sm:text-xl font-bold tracking-tight text-white leading-tight">
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white leading-tight truncate">
               {getTitle()}
             </h1>
             {isCalculatorTab && (
-              <p className="text-[11px] text-orange-200 dark:text-zinc-400 font-medium">
+              <p className="text-[11px] text-orange-200 dark:text-zinc-400 font-medium truncate">
                 {activeTab === 'pl-opening-balance'
                   ? 'Dual Entitlement & Xero Reconciler'
+                  : activeTab === 'standard-ot-adjustment'
+                  ? 'Prorated Standard OT for LWOP'
                   : 'Pay Run & Period Accruals'}
               </p>
             )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, Scale, Settings, Info, X, LogOut, FileSpreadsheet } from 'lucide-react';
+import { Calculator, Scale, Clock, Settings, Info, X, LogOut } from 'lucide-react';
 import { ActiveTab } from '../types';
 
 interface NavigationDrawerProps {
@@ -93,8 +93,28 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 activeTab === 'pl-opening-balance' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
               }`}
             />
+            <span className="text-sm font-bold">PL Opening Balance</span>
+          </button>
+
+          {/* Standard OT Adjustment Calculator */}
+          <button
+            onClick={() => {
+              onSelectTab('standard-ot-adjustment');
+              onClose();
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-base transition-all text-left cursor-pointer ${
+              activeTab === 'standard-ot-adjustment'
+                ? 'bg-orange-100 text-orange-950 dark:bg-zinc-800 dark:text-orange-400 shadow-sm'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+            }`}
+          >
+            <Clock
+              className={`w-5 h-5 ${
+                activeTab === 'standard-ot-adjustment' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
+              }`}
+            />
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold">PL Opening Balance</span>
+              <span className="text-sm font-bold">Standard OT Adjustment</span>
               <span className="px-1.5 py-0.5 bg-orange-600 text-white dark:bg-orange-500 rounded text-[9px] font-bold uppercase">
                 NEW
               </span>

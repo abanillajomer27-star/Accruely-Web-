@@ -4,17 +4,21 @@ import {
   LeaveAccrualResults,
   PLCalculatorInputs,
   PLCalculatorResults,
+  StandardOTAdjustmentInputs,
+  StandardOTAdjustmentResults,
   SettingsPreferences,
   ActiveTab,
 } from './types';
 import {
   calculateLeaveAccrual,
   calculatePLOpeningBalance,
+  calculateStandardOTAdjustment,
 } from './utils/calculator';
 import { Header } from './components/Header';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { LeaveAccrualCalculatorView } from './components/LeaveAccrualCalculatorView';
 import { PLOpeningBalanceCalculatorView } from './components/PLOpeningBalanceCalculatorView';
+import { StandardOTAdjustmentCalculatorView } from './components/StandardOTAdjustmentCalculatorView';
 import { SettingsView } from './components/SettingsView';
 import { AboutView } from './components/AboutView';
 import { EditFieldModal } from './components/EditFieldModal';
@@ -62,6 +66,13 @@ const DEFAULT_PL_INPUTS: PLCalculatorInputs = {
   currentXeroBalance: 0,
 };
 
+const DEFAULT_STANDARD_OT_INPUTS: StandardOTAdjustmentInputs = {
+  employeeName: 'John Smith',
+  standardOrdinaryHours: 38,
+  standardOT: 2,
+  lwopDays: 0,
+};
+
 const DEFAULT_SETTINGS: SettingsPreferences = {
   defaultStandardHoursPerDay: 7.6,
   defaultAnnualEntitlementHours: 76.0,
@@ -103,6 +114,22 @@ export default function App() {
     return DEFAULT_PL_INPUTS;
   });
 
+  // Standard OT Adjustment Inputs
+  const [standardOTInputs, setStandardOTInputs] = useState<StandardOTAdjustmentInputs>(() => {
+    const saved = localStorage.getItem('accruely_standard_ot_inputs');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.standardOrdinaryHours === 'number') {
+          return parsed;
+        }
+      } catch (e) {
+        // fallback
+      }
+    }
+    return DEFAULT_STANDARD_OT_INPUTS;
+  });
+
   // Settings
   const [settings, setSettings] = useState<SettingsPreferences>(() => {
     const saved = localStorage.getItem('accruely_settings');
@@ -136,6 +163,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('accruely_pl_inputs', JSON.stringify(plInputs));
   }, [plInputs]);
+
+  useEffect(() => {
+    localStorage.setItem('accruely_standard_ot_inputs', JSON.stringify(standardOTInputs));
+  }, [standardOTInputs]);
 
   useEffect(() => {
     localStorage.setItem('accruely_settings', JSON.stringify(settings));
@@ -262,6 +293,8 @@ export default function App() {
           remainingWeeks: 0,
         },
       });
+    } else if (activeTab === 'standard-ot-adjustment') {
+      setStandardOTInputs(DEFAULT_STANDARD_OT_INPUTS);
     }
   };
 
@@ -282,6 +315,8 @@ export default function App() {
   // Calculations
   const leaveAccrualResults: LeaveAccrualResults = calculateLeaveAccrual(leaveAccrualInputs);
   const plResults: PLCalculatorResults = calculatePLOpeningBalance(plInputs);
+  const standardOTResults: StandardOTAdjustmentResults =
+    calculateStandardOTAdjustment(standardOTInputs);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#121212] text-zinc-900 dark:text-zinc-100 font-sans flex flex-col antialiased transition-colors duration-200">
@@ -314,6 +349,14 @@ export default function App() {
             inputs={plInputs}
             results={plResults}
             onChangeInput={setPlInputs}
+          />
+        )}
+
+        {activeTab === 'standard-ot-adjustment' && (
+          <StandardOTAdjustmentCalculatorView
+            inputs={standardOTInputs}
+            results={standardOTResults}
+            onChangeInput={setStandardOTInputs}
           />
         )}
 

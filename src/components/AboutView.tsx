@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Info, Calculator, Scale, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Info, Calculator, Scale, Clock, ShieldCheck } from 'lucide-react';
 
 export const AboutView: React.FC = () => {
   return (
@@ -81,6 +81,47 @@ export const AboutView: React.FC = () => {
             <li><strong>Personal / Carer's Leave (PL):</strong> 10 days per year standard (0.038462 hrs/hr worked).</li>
             <li><strong>Closing Balances:</strong> Opening Balance + Accrued − Taken.</li>
           </ul>
+        </div>
+      </div>
+
+      {/* STANDARD OT ADJUSTMENT CALCULATOR EXPLANATION */}
+      <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-orange-200/80 dark:border-zinc-800 space-y-4 transition-colors">
+        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-orange-200/60 dark:border-zinc-800 pb-3">
+          <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
+            Standard OT Adjustment Calculator
+          </h3>
+        </div>
+
+        <div className="space-y-3.5 text-sm text-zinc-800 dark:text-zinc-300 leading-relaxed">
+          <p>
+            Designed for companies that prorate fixed regular overtime entitlements when an employee takes unpaid leave (Leave Without Pay / LWOP).
+          </p>
+
+          <div>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+              • Calculation Formulas
+            </h4>
+            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-orange-100/60 dark:bg-zinc-800 p-3 rounded-xl mt-1">
+              <div>Standard Hours Per Day = Standard Ordinary Hours ÷ 5</div>
+              <div>LWOP Hours = LWOP Days × Standard Hours Per Day</div>
+              <div>Ordinary Hours Worked = Standard Ordinary Hours − LWOP Hours</div>
+              <div>Attendance Percentage = Ordinary Hours Worked ÷ Standard Ordinary Hours</div>
+              <div className="text-orange-700 dark:text-orange-400 font-bold">
+                Adjusted Standard OT = Standard OT × Attendance Percentage
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+              • Quick Employment Presets
+            </h4>
+            <ul className="list-disc pl-5 space-y-1 text-zinc-700 dark:text-zinc-300">
+              <li><strong>76-Hour Employee:</strong> 38 Standard Ordinary Hours, 2 Standard OT (7.6 hrs/day).</li>
+              <li><strong>88-Hour Employee:</strong> 44 Standard Ordinary Hours, 2 Standard OT (8.8 hrs/day).</li>
+            </ul>
+          </div>
         </div>
       </div>
 

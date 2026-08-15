@@ -4,6 +4,8 @@ import {
   PLCalculatorInputs,
   PLCalculatorResults,
   PeriodAccrualResults,
+  StandardOTAdjustmentInputs,
+  StandardOTAdjustmentResults,
 } from '../types';
 
 /**
@@ -423,6 +425,91 @@ Personal Leave Accrued This Pay: +${formatNum(results.personalLeaveAccrued, 4)} 
 Available Personal Leave:    ${formatNum(results.availablePersonalLeave, 4)} hrs
 Less: Personal Leave Taken:  −${formatNum(inputs.personalLeaveTaken, 2)} hrs
 CLOSING PERSONAL LEAVE BALANCE: ${formatNum(results.personalLeaveClosingBalance, 4)} hrs
+
+==========================================
+Accruely - Made by Jomer Abanilla, CFMS
+==========================================`;
+}
+
+/**
+ * STANDARD OT ADJUSTMENT CALCULATOR
+ * 
+ * Rules:
+ * Standard Hours Per Day = Standard Ordinary Hours ÷ 5
+ * LWOP Hours = LWOP Days × Standard Hours Per Day
+ * Ordinary Hours Worked = Standard Ordinary Hours − LWOP Hours
+ * Attendance Percentage = Ordinary Hours Worked ÷ Standard Ordinary Hours
+ * Adjusted Standard OT = Standard OT × Attendance Percentage
+ */
+export function calculateStandardOTAdjustment(
+  inputs: StandardOTAdjustmentInputs
+): StandardOTAdjustmentResults {
+  const standardOrdinaryHours = Math.max(0, inputs.standardOrdinaryHours || 0);
+  const standardOT = Math.max(0, inputs.standardOT || 0);
+  const lwopDays = Math.max(0, inputs.lwopDays || 0);
+
+  // Standard Hours Per Day = Standard Ordinary Hours ÷ 5
+  const standardHoursPerDay = standardOrdinaryHours > 0 ? standardOrdinaryHours / 5 : 0;
+
+  // LWOP Hours = LWOP Days × Standard Hours Per Day
+  const lwopHours = lwopDays * standardHoursPerDay;
+
+  // Ordinary Hours Worked = Standard Ordinary Hours − LWOP Hours
+  const ordinaryHoursWorked = Math.max(0, standardOrdinaryHours - lwopHours);
+
+  // Attendance Percentage = Ordinary Hours Worked ÷ Standard Ordinary Hours
+  const attendancePercentage =
+    standardOrdinaryHours > 0 ? ordinaryHoursWorked / standardOrdinaryHours : 0;
+
+  // Adjusted Standard OT = Standard OT × Attendance Percentage
+  const adjustedStandardOT = standardOT * attendancePercentage;
+
+  return {
+    standardHoursPerDay,
+    lwopHours,
+    ordinaryHoursWorked,
+    attendancePercentage,
+    adjustedStandardOT,
+  };
+}
+
+export function generateStandardOTAdjustmentStatementText(
+  inputs: StandardOTAdjustmentInputs,
+  results: StandardOTAdjustmentResults
+): string {
+  const dateStr = new Date().toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return `==========================================
+ACCRUELY - STANDARD OT ADJUSTMENT STATEMENT
+Generated on: ${dateStr}
+Reference: Company Policy - Prorated Standard OT with LWOP
+==========================================
+
+EMPLOYEE DETAILS
+------------------------------------------
+Employee: ${inputs.employeeName || 'Unspecified Employee'}
+
+INPUT PARAMETERS
+------------------------------------------
+Standard Ordinary Hours:   ${formatNum(inputs.standardOrdinaryHours, 2)} hrs/week
+Standard Overtime (OT):    ${formatNum(inputs.standardOT, 2)} hrs
+Leave Without Pay (LWOP):  ${formatNum(inputs.lwopDays, 2)} days
+
+CALCULATION BREAKDOWN
+------------------------------------------
+Standard Hours Per Day:    ${formatNum(results.standardHoursPerDay, 2)} hrs/day (${formatNum(inputs.standardOrdinaryHours, 2)} ÷ 5)
+LWOP Hours Deducted:       ${formatNum(results.lwopHours, 2)} hrs (${formatNum(inputs.lwopDays, 2)} × ${formatNum(results.standardHoursPerDay, 2)})
+Ordinary Hours Worked:     ${formatNum(results.ordinaryHoursWorked, 2)} hrs (${formatNum(inputs.standardOrdinaryHours, 2)} − ${formatNum(results.lwopHours, 2)})
+Attendance Rate:           ${(results.attendancePercentage * 100).toFixed(2)}% (${formatNum(results.ordinaryHoursWorked, 2)} ÷ ${formatNum(inputs.standardOrdinaryHours, 2)})
+
+FINAL ADJUSTED OVERTIME
+==========================================
+ADJUSTED STANDARD OT:      ${formatNum(results.adjustedStandardOT, 2)} hrs (${formatNum(inputs.standardOT, 2)} × ${(results.attendancePercentage * 100).toFixed(2)}%)
+==========================================
 
 ==========================================
 Accruely - Made by Jomer Abanilla, CFMS
