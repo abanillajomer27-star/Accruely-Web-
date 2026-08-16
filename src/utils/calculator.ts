@@ -8,6 +8,8 @@ import {
   StandardOTAdjustmentResults,
   WeekendPayInputs,
   WeekendPayResults,
+  SplitTierResult,
+  SplitHoursResult,
 } from '../types';
 
 /**
@@ -541,36 +543,35 @@ export function parseFormattedNumber(input: string | number): number {
  * WEEKEND PAY CALCULATOR
  *
  * Supports:
- * 1. Ordinary Hours:
- *    Multiplier = Weekend Percentage ÷ 100
- *    Weekend Pay Rate = Ordinary Hourly Rate × Multiplier
- *    Total Weekend Pay = Weekend Pay Rate × Hours Worked
- * 2. Tiered Overtime:
- *    First Tier Hours = MIN(Total OT Hours, Threshold Hours)
- *    Remaining Hours = MAX(Total OT Hours - Threshold Hours, 0)
- *    First Tier Pay = Ordinary Rate × First OT Multiplier × First Tier Hours
- *    Higher Tier Pay = Ordinary Rate × Higher OT Multiplier × Remaining Hours
- *    Total Overtime Pay = First Tier Pay + Higher Tier Pay
+ * 1. Standard Mode:
+ *    - Ordinary Hours: Weekend Percentage ÷ 100 × Ordinary Rate × Hours
+ *    - Overtime: Threshold splitting between First OT Rate and Higher OT Rate
+ * 2. Split Hours Mode:
+ *    - Bookkeeper enters Total Hours (supports decimal & large timesheets)
+ *    - Configurable rate tiers (e.g. Tier 1: 2.00h @ 125%, Tier 2: 5.00h @ 150%, ..., Final: Remaining @ 200%)
+ *    - Automatically splits hours across tiers without loss or duplication
+ *    - Reconciles total split hours against original total hours
+ *    - Computes pay per tier and total pay
  */
 export function calculateWeekendPay(inputs: WeekendPayInputs): WeekendPayResults {
+  const calculationType = inputs.calculationType || 'Standard';
   const isTieredOvertime = inputs.workType === 'Overtime';
   const ordinaryRate = Math.max(0, Number(inputs.ordinaryHourlyRate) || 0);
 
-  // --- ORDINARY HOURS CALCULATION ---
+  // --- 1. STANDARD MODE: ORDINARY HOURS ---
   const percentage = Math.max(0, Number(inputs.weekendRatePercentage) || 0);
   const hours = Math.max(0, Number(inputs.hoursWorked) || 0);
   const multiplier = percentage / 100;
   const weekendPayRate = ordinaryRate * multiplier;
   const totalOrdinaryPay = weekendPayRate * hours;
 
-  // Formatted Ordinary Equation: $30.00 × 150% × 6.00 = $270.00
   const formattedOrdinary = `$${formatNum(ordinaryRate, 2)}`;
   const formattedPercent = `${percentage % 1 === 0 ? percentage.toFixed(0) : percentage.toFixed(2)}%`;
   const formattedHours = formatNum(hours, 2);
   const formattedOrdinaryTotal = `$${formatNum(totalOrdinaryPay, 2)}`;
   let breakdownEquation = `${formattedOrdinary} × ${formattedPercent} × ${formattedHours} = ${formattedOrdinaryTotal}`;
 
-  // --- TIERED OVERTIME CALCULATION ---
+  // --- 2. STANDARD MODE: TIERED OVERTIME ---
   const firstOtRatePercentage = Math.max(0, Number(inputs.firstOtRatePercentage) || 0);
   const higherOtRatePercentage = Math.max(0, Number(inputs.higherOtRatePercentage) || 0);
   const higherRateThresholdHours = Math.max(0, Number(inputs.higherRateThresholdHours) || 0);
@@ -611,9 +612,96 @@ export function calculateWeekendPay(inputs: WeekendPayInputs): WeekendPayResults
     }
   }
 
-  const totalWeekendPay = isTieredOvertime ? totalOvertimePay : totalOrdinaryPay;
+  // --- 3. SPLIT HOURS MODE: MULTI-TIER AUTOMATIC SPLITTING ---
+  const totalInputHours = Math.max(0, Number(inputs.splitTotalHours) || 0);
+  let remainingPool = totalInputHours;
+  let totalAllocatedHours = 0;
+  let totalSplitPay = 0;
+  const tierResults: SplitTierResult[] = [];
+
+  const tiers =
+    inputs.splitTiers && inputs.splitTiers.length > 0
+      ? inputs.splitTiers
+      : [
+          { id: 'tier-1', capHours: 2.0, ratePercentage: 150 },
+          { id: 'tier-2', capHours: null, ratePercentage: 200 },
+        ];
+
+  tiers.forEach((tier, index) => {
+    const isLast = index === tiers.length - 1;
+    const cap = tier.capHours;
+    let allocated = 0;
+
+    if (cap === null || isLast) {
+      allocated = Math.max(0, remainingPool);
+      remainingPool = 0;
+    } else {
+      allocated = Math.min(Math.max(0, remainingPool), Math.max(0, cap));
+      remainingPool = Math.max(0, remainingPool - allocated);
+    }
+
+    // Precise floating point rounding to 4 decimals
+    allocated = Math.round(allocated * 10000) / 10000;
+
+    const ratePercentage = Math.max(0, Number(tier.ratePercentage) || 0);
+    const tierMultiplier = ratePercentage / 100;
+    const tierHourlyRate = ordinaryRate * tierMultiplier;
+    const tierPay = allocated * tierHourlyRate;
+
+    totalAllocatedHours += allocated;
+    totalSplitPay += tierPay;
+
+    const formattedTierPercent = `${
+      ratePercentage % 1 === 0
+        ? ratePercentage.toFixed(0)
+        : ratePercentage.toFixed(2)
+    }%`;
+
+    const label =
+      cap !== null && !isLast
+        ? `Tier ${index + 1} (First ${formatNum(cap, 2)} hrs)`
+        : `Tier ${index + 1} (Remaining hrs)`;
+
+    const equation = `${formatNum(allocated, 2)} hrs × ${formattedTierPercent} ($${formatNum(tierHourlyRate, 2)}/hr) = $${formatNum(tierPay, 2)}`;
+
+    tierResults.push({
+      id: tier.id,
+      tierIndex: index + 1,
+      label,
+      capHours: isLast ? null : cap,
+      ratePercentage,
+      multiplier: tierMultiplier,
+      tierHourlyRate,
+      allocatedHours: allocated,
+      tierPay,
+      equation,
+    });
+  });
+
+  totalAllocatedHours = Math.round(totalAllocatedHours * 10000) / 10000;
+  const hoursDifference =
+    Math.round(Math.abs(totalInputHours - totalAllocatedHours) * 10000) / 10000;
+  const isReconciled = hoursDifference < 0.0001;
+
+  const splitHoursResult: SplitHoursResult = {
+    totalInputHours,
+    totalAllocatedHours,
+    hoursDifference,
+    isReconciled,
+    totalSplitPay,
+    tierResults,
+  };
+
+  // Determine overall Total Pay based on Active Calculation Type
+  let totalWeekendPay = totalOrdinaryPay;
+  if (calculationType === 'Split Hours') {
+    totalWeekendPay = totalSplitPay;
+  } else if (isTieredOvertime) {
+    totalWeekendPay = totalOvertimePay;
+  }
 
   return {
+    calculationType,
     isTieredOvertime,
     multiplier,
     weekendPayRate,
@@ -632,6 +720,7 @@ export function calculateWeekendPay(inputs: WeekendPayInputs): WeekendPayResults
     higherTierPay,
     totalOvertimeHours,
     totalOvertimePay,
+    splitHoursResult,
     totalWeekendPay,
   };
 }
@@ -646,6 +735,55 @@ export function generateWeekendPayStatementText(
     year: 'numeric',
   });
 
+  // 1. SPLIT HOURS MODE STATEMENT
+  if (inputs.calculationType === 'Split Hours') {
+    const tierLines = results.splitHoursResult.tierResults
+      .map(
+        (t) =>
+          `• ${t.label.padEnd(26)} : ${formatNum(t.allocatedHours, 2).padStart(6)} hrs @ ${String(t.ratePercentage).padStart(3)}% ($${formatNum(t.tierHourlyRate, 2)}/hr) = $${formatNum(t.tierPay, 2)}`
+      )
+      .join('\n');
+
+    return `==========================================
+ACCRUELY - WEEKEND SPLIT HOURS STATEMENT
+Generated on: ${dateStr}
+Reference: Australian Award / Agreement Timesheet Hour Splitting
+==========================================
+
+EMPLOYEE & SHIFT DETAILS
+------------------------------------------
+Employee:        ${inputs.employeeName || 'Unspecified Employee'}
+Employee Type:   ${inputs.employeeType}
+Day Worked:      ${inputs.dayWorked}
+Calculation:     Split Hours (Automatic Tier Distribution)
+Ordinary Rate:   $${formatNum(inputs.ordinaryHourlyRate, 2)}/hr
+Total Hours:     ${formatNum(inputs.splitTotalHours, 2)} hrs
+
+AUTOMATIC RATE SPLIT BREAKDOWN
+------------------------------------------
+${tierLines}
+
+HOURS RECONCILIATION
+------------------------------------------
+Original Timesheet Hours: ${formatNum(results.splitHoursResult.totalInputHours, 2)} hrs
+Total Split Hours:        ${formatNum(results.splitHoursResult.totalAllocatedHours, 2)} hrs
+Discrepancy / Difference: ${formatNum(results.splitHoursResult.hoursDifference, 2)} hrs ${results.splitHoursResult.isReconciled ? '(100% Matched / Reconciled)' : ''}
+
+TOTAL SUMMARY
+==========================================
+TOTAL HOURS: ${formatNum(results.splitHoursResult.totalAllocatedHours, 2)} hrs
+TOTAL PAY:   $${formatNum(results.splitHoursResult.totalSplitPay, 2)}
+==========================================
+
+DISCLAIMER:
+Weekend, overtime and penalty rates can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Enter the applicable rate structure for the employee and verify it before processing payroll.
+
+==========================================
+Accruely • Australian Payroll Tools
+==========================================`;
+  }
+
+  // 2. STANDARD MODE - OVERTIME STATEMENT
   if (inputs.workType === 'Overtime') {
     const formattedFirstPercent = `${
       inputs.firstOtRatePercentage % 1 === 0
@@ -700,13 +838,14 @@ TOTAL OVERTIME PAY: $${formatNum(results.totalOvertimePay, 2)}
 ==========================================
 
 NOTICE:
-Overtime rates and thresholds can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Verify the applicable rate and threshold before processing payroll.
+Weekend, overtime and penalty rates can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Enter the applicable rate structure for the employee and verify it before processing payroll.
 
 ==========================================
 Accruely • Australian Payroll Tools
 ==========================================`;
   }
 
+  // 3. STANDARD MODE - ORDINARY HOURS STATEMENT
   const formattedPercent = `${
     inputs.weekendRatePercentage % 1 === 0
       ? inputs.weekendRatePercentage.toFixed(0)

@@ -81,6 +81,7 @@ const DEFAULT_WEEKEND_PAY_INPUTS: WeekendPayInputs = {
   employeeType: 'Full-time',
   dayWorked: 'Saturday',
   workType: 'Ordinary Hours',
+  calculationType: 'Standard',
   ordinaryHourlyRate: 30.0,
   weekendRatePercentage: 150,
   hoursWorked: 6.0,
@@ -88,6 +89,11 @@ const DEFAULT_WEEKEND_PAY_INPUTS: WeekendPayInputs = {
   higherOtRatePercentage: 200,
   higherRateThresholdHours: 2.0,
   totalOtHours: 4.0,
+  splitTotalHours: 7.0,
+  splitTiers: [
+    { id: 'tier-1', capHours: 2.0, ratePercentage: 150 },
+    { id: 'tier-2', capHours: null, ratePercentage: 200 },
+  ],
 };
 
 const DEFAULT_SETTINGS: SettingsPreferences = {

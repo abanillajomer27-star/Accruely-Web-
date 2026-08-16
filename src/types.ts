@@ -130,31 +130,65 @@ export interface StandardOTAdjustmentResults {
 export type EmployeeType = 'Full-time' | 'Part-time' | 'Casual';
 export type DayWorked = 'Saturday' | 'Sunday';
 export type WorkType = 'Ordinary Hours' | 'Overtime';
+export type WeekendCalculationType = 'Standard' | 'Split Hours';
+
+export interface SplitTierConfig {
+  id: string;
+  capHours: number | null; // null represents "Remaining hours"
+  ratePercentage: number;
+}
+
+export interface SplitTierResult {
+  id: string;
+  tierIndex: number;
+  label: string;
+  capHours: number | null;
+  ratePercentage: number;
+  multiplier: number;
+  tierHourlyRate: number;
+  allocatedHours: number;
+  tierPay: number;
+  equation: string;
+}
+
+export interface SplitHoursResult {
+  totalInputHours: number;
+  totalAllocatedHours: number;
+  hoursDifference: number;
+  isReconciled: boolean;
+  totalSplitPay: number;
+  tierResults: SplitTierResult[];
+}
 
 export interface WeekendPayInputs {
   employeeName: string;
   employeeType: EmployeeType;
   dayWorked: DayWorked;
   workType: WorkType;
+  calculationType: WeekendCalculationType;
   ordinaryHourlyRate: number;
-  // Ordinary weekend parameters
+  // Standard mode - Ordinary weekend parameters
   weekendRatePercentage: number;
   hoursWorked: number;
-  // Tiered overtime parameters
+  // Standard mode - Tiered overtime parameters
   firstOtRatePercentage: number;
   higherOtRatePercentage: number;
   higherRateThresholdHours: number;
   totalOtHours: number;
+  // Split Hours mode parameters
+  splitTotalHours: number;
+  splitTiers: SplitTierConfig[];
 }
 
 export interface WeekendPayResults {
+  calculationType: WeekendCalculationType;
   isTieredOvertime: boolean;
-  // Ordinary Results
+  // Standard Mode - Ordinary Results
   multiplier: number;
   weekendPayRate: number;
   hoursWorked: number;
   breakdownEquation: string;
-  // Tiered Overtime Results
+  // Standard Mode - Tiered Overtime Results
   firstOtRatePercentage: number;
   firstOtMultiplier: number;
   firstTierHourlyRate: number;
@@ -168,6 +202,8 @@ export interface WeekendPayResults {
   higherTierPay: number;
   totalOvertimeHours: number;
   totalOvertimePay: number;
+  // Split Hours Mode Results
+  splitHoursResult: SplitHoursResult;
   // Overall Final Result
   totalWeekendPay: number;
 }

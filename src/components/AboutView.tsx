@@ -217,8 +217,27 @@ export const AboutView: React.FC = () => {
           </div>
 
           <div>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+              • Split Hours (Automatic Tier Splitting) Logic
+            </h4>
+            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
+              <div>Tier Multiplier = Tier Rate Percentage ÷ 100</div>
+              <div>Tier Hourly Rate = Ordinary Hourly Rate × Tier Multiplier</div>
+              <div>Tier Hours = Allocated portion of Total Timesheet Hours</div>
+              <div>Tier Pay = Tier Hours × Tier Hourly Rate</div>
+              <div>Total Split Hours = Sum of all Allocated Tier Hours</div>
+              <div className="text-orange-700 dark:text-orange-400 font-bold">
+                Total Split Pay = Sum of all Tier Pay
+              </div>
+              <div className="text-emerald-700 dark:text-emerald-400 font-bold">
+                Reconciliation: Original Timesheet Hours − Total Split Hours = 0.00 hrs
+              </div>
+            </div>
+          </div>
+
+          <div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              <em>Note:</em> Overtime rates and thresholds can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Verify the applicable rate and threshold before processing payroll.
+              <em>Disclaimer:</em> Weekend, overtime and penalty rates can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Enter the applicable rate structure for the employee and verify it before processing payroll.
             </p>
           </div>
         </div>
