@@ -131,4 +131,5 @@ export type ActiveTab =
   | 'pl-opening-balance'
   | 'standard-ot-adjustment'
   | 'settings'
-  | 'about';
+  | 'about'
+  | 'privacy-policy';

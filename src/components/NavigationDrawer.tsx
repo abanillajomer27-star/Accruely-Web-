@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, Scale, Clock, Settings, Info, X } from 'lucide-react';
+import { Calculator, Scale, Clock, Settings, Info, ShieldCheck, X } from 'lucide-react';
 import { ActiveTab } from '../types';
 
 interface NavigationDrawerProps {
@@ -156,6 +156,25 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               }`}
             />
             <span>About Accruely</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onSelectTab('privacy-policy');
+              onClose();
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all text-left cursor-pointer ${
+              activeTab === 'privacy-policy'
+                ? 'bg-orange-100 text-orange-950 dark:bg-zinc-800 dark:text-orange-400 shadow-sm'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+            }`}
+          >
+            <ShieldCheck
+              className={`w-5 h-5 ${
+                activeTab === 'privacy-policy' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
+              }`}
+            />
+            <span>Privacy Policy</span>
           </button>
         </nav>
 

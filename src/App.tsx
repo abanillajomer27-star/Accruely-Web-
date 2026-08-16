@@ -21,6 +21,7 @@ import { PLOpeningBalanceCalculatorView } from './components/PLOpeningBalanceCal
 import { StandardOTAdjustmentCalculatorView } from './components/StandardOTAdjustmentCalculatorView';
 import { SettingsView } from './components/SettingsView';
 import { AboutView } from './components/AboutView';
+import { PrivacyPolicyView } from './components/PrivacyPolicyView';
 
 const DEFAULT_LEAVE_ACCRUAL_INPUTS: LeaveAccrualInputs = {
   employeeName: 'John Smith',
@@ -309,7 +310,44 @@ export default function App() {
         )}
 
         {activeTab === 'about' && <AboutView />}
+
+        {activeTab === 'privacy-policy' && (
+          <PrivacyPolicyView
+            onBackToCalculator={() => setActiveTab('standard-ot-adjustment')}
+          />
+        )}
       </main>
+
+      {/* Website Footer */}
+      <footer className="mt-auto py-5 border-t border-zinc-200/80 dark:border-zinc-800 text-center text-xs text-zinc-500 dark:text-zinc-400 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xs transition-colors">
+        <div className="max-w-xl mx-auto px-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+          <span>Accruely • Australian Payroll Tools</span>
+          <span className="text-zinc-300 dark:text-zinc-700">•</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('privacy-policy')}
+            className={`font-medium transition-colors cursor-pointer ${
+              activeTab === 'privacy-policy'
+                ? 'text-orange-600 dark:text-orange-400 underline underline-offset-2'
+                : 'hover:text-orange-600 dark:hover:text-orange-400'
+            }`}
+          >
+            Privacy Policy
+          </button>
+          <span className="text-zinc-300 dark:text-zinc-700">•</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('about')}
+            className={`font-medium transition-colors cursor-pointer ${
+              activeTab === 'about'
+                ? 'text-orange-600 dark:text-orange-400 underline underline-offset-2'
+                : 'hover:text-orange-600 dark:hover:text-orange-400'
+            }`}
+          >
+            About
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }

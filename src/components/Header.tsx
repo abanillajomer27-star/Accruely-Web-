@@ -27,6 +27,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Settings & Preferences';
       case 'about':
         return 'About Accruely';
+      case 'privacy-policy':
+        return 'Privacy Policy';
       default:
         return 'Accruely';
     }
