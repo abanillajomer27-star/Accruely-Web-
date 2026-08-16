@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Calculator, Scale, Clock, ShieldCheck } from 'lucide-react';
+import { User, Calculator, Scale, Clock, ShieldCheck, DollarSign } from 'lucide-react';
 
 export const AboutView: React.FC = () => {
   return (
@@ -34,11 +34,6 @@ export const AboutView: React.FC = () => {
           <p>
             The goal is to provide practical payroll and entitlement tools that help professionals reduce manual calculations, identify discrepancies, and work more efficiently.
           </p>
-          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
-            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 italic">
-              Accruely was created by Jomer Abanilla, CFMS.
-            </p>
-          </div>
         </div>
       </div>
 
@@ -175,6 +170,56 @@ export const AboutView: React.FC = () => {
               <li><strong>76-Hour Employee:</strong> 38 Standard Ordinary Hours, 2 Standard OT (7.6 hrs/day).</li>
               <li><strong>88-Hour Employee:</strong> 44 Standard Ordinary Hours, 2 Standard OT (8.8 hrs/day).</li>
             </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* WEEKEND PAY CALCULATOR EXPLANATION */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
+        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
+            Weekend Pay Calculator
+          </h3>
+        </div>
+
+        <div className="space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+          <p>
+            Calculates weekend ordinary penalties and tiered overtime shifts using ordinary hourly rates, configurable penalty percentages, and threshold splitting.
+          </p>
+
+          <div>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+              • Ordinary Weekend Calculation Logic
+            </h4>
+            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
+              <div>Multiplier = Weekend Percentage ÷ 100</div>
+              <div>Weekend Pay Rate = Ordinary Hourly Rate × Multiplier</div>
+              <div className="text-orange-700 dark:text-orange-400 font-bold">
+                Total Weekend Pay = Weekend Pay Rate × Hours Worked
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+              • Tiered Overtime Calculation Logic
+            </h4>
+            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
+              <div>First Tier Hours = MIN(Total OT Hours, Threshold Hours)</div>
+              <div>Remaining Hours = MAX(Total OT Hours − Threshold Hours, 0)</div>
+              <div>First Tier Pay = Ordinary Rate × (First OT Rate ÷ 100) × First Tier Hours</div>
+              <div>Higher Tier Pay = Ordinary Rate × (Higher OT Rate ÷ 100) × Remaining Hours</div>
+              <div className="text-orange-700 dark:text-orange-400 font-bold">
+                Total Overtime Pay = First Tier Pay + Higher Tier Pay
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <em>Note:</em> Overtime rates and thresholds can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Verify the applicable rate and threshold before processing payroll.
+            </p>
           </div>
         </div>
       </div>

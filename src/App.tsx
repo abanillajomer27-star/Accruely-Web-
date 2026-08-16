@@ -6,6 +6,8 @@ import {
   PLCalculatorResults,
   StandardOTAdjustmentInputs,
   StandardOTAdjustmentResults,
+  WeekendPayInputs,
+  WeekendPayResults,
   SettingsPreferences,
   ActiveTab,
 } from './types';
@@ -13,12 +15,14 @@ import {
   calculateLeaveAccrual,
   calculatePLOpeningBalance,
   calculateStandardOTAdjustment,
+  calculateWeekendPay,
 } from './utils/calculator';
 import { Header } from './components/Header';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { LeaveAccrualCalculatorView } from './components/LeaveAccrualCalculatorView';
 import { PLOpeningBalanceCalculatorView } from './components/PLOpeningBalanceCalculatorView';
 import { StandardOTAdjustmentCalculatorView } from './components/StandardOTAdjustmentCalculatorView';
+import { WeekendPayCalculatorView } from './components/WeekendPayCalculatorView';
 import { SettingsView } from './components/SettingsView';
 import { AboutView } from './components/AboutView';
 import { PrivacyPolicyView } from './components/PrivacyPolicyView';
@@ -70,6 +74,20 @@ const DEFAULT_STANDARD_OT_INPUTS: StandardOTAdjustmentInputs = {
   standardOrdinaryHours: 38,
   standardOT: 2,
   lwopDays: 0,
+};
+
+const DEFAULT_WEEKEND_PAY_INPUTS: WeekendPayInputs = {
+  employeeName: 'John Smith',
+  employeeType: 'Full-time',
+  dayWorked: 'Saturday',
+  workType: 'Ordinary Hours',
+  ordinaryHourlyRate: 30.0,
+  weekendRatePercentage: 150,
+  hoursWorked: 6.0,
+  firstOtRatePercentage: 150,
+  higherOtRatePercentage: 200,
+  higherRateThresholdHours: 2.0,
+  totalOtHours: 4.0,
 };
 
 const DEFAULT_SETTINGS: SettingsPreferences = {
@@ -128,6 +146,22 @@ export default function App() {
     return DEFAULT_STANDARD_OT_INPUTS;
   });
 
+  // Weekend Pay Inputs
+  const [weekendPayInputs, setWeekendPayInputs] = useState<WeekendPayInputs>(() => {
+    const saved = localStorage.getItem('accruely_weekend_pay_inputs');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.ordinaryHourlyRate === 'number') {
+          return { ...DEFAULT_WEEKEND_PAY_INPUTS, ...parsed };
+        }
+      } catch (e) {
+        // fallback
+      }
+    }
+    return DEFAULT_WEEKEND_PAY_INPUTS;
+  });
+
   // Settings
   const [settings, setSettings] = useState<SettingsPreferences>(() => {
     const saved = localStorage.getItem('accruely_settings');
@@ -153,6 +187,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('accruely_standard_ot_inputs', JSON.stringify(standardOTInputs));
   }, [standardOTInputs]);
+
+  useEffect(() => {
+    localStorage.setItem('accruely_weekend_pay_inputs', JSON.stringify(weekendPayInputs));
+  }, [weekendPayInputs]);
 
   useEffect(() => {
     localStorage.setItem('accruely_settings', JSON.stringify(settings));
@@ -252,6 +290,8 @@ export default function App() {
       });
     } else if (activeTab === 'standard-ot-adjustment') {
       setStandardOTInputs(DEFAULT_STANDARD_OT_INPUTS);
+    } else if (activeTab === 'weekend-pay') {
+      setWeekendPayInputs(DEFAULT_WEEKEND_PAY_INPUTS);
     }
   };
 
@@ -260,6 +300,7 @@ export default function App() {
   const plResults: PLCalculatorResults = calculatePLOpeningBalance(plInputs);
   const standardOTResults: StandardOTAdjustmentResults =
     calculateStandardOTAdjustment(standardOTInputs);
+  const weekendPayResults: WeekendPayResults = calculateWeekendPay(weekendPayInputs);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#121212] text-zinc-900 dark:text-zinc-100 font-sans flex flex-col antialiased transition-colors duration-200">
@@ -302,6 +343,14 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'weekend-pay' && (
+          <WeekendPayCalculatorView
+            inputs={weekendPayInputs}
+            results={weekendPayResults}
+            onChangeInput={setWeekendPayInputs}
+          />
+        )}
+
         {activeTab === 'settings' && (
           <SettingsView
             settings={settings}
@@ -313,7 +362,7 @@ export default function App() {
 
         {activeTab === 'privacy-policy' && (
           <PrivacyPolicyView
-            onBackToCalculator={() => setActiveTab('standard-ot-adjustment')}
+            onBackToCalculator={() => setActiveTab('weekend-pay')}
           />
         )}
       </main>

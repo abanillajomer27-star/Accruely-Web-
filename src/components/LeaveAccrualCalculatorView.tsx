@@ -9,6 +9,7 @@ import {
   Briefcase,
   Layers,
   ChevronDown,
+  ChevronUp,
   Info,
   Sparkles,
   ToggleLeft,
@@ -75,6 +76,7 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDescription, setShowDescription] = useState(true);
 
   const openEditModal = (
     title: string,
@@ -192,6 +194,45 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
 
   return (
     <div className="space-y-6 pb-12">
+      {/* CALCULATOR TITLE & COLLAPSIBLE DESCRIPTION CARD */}
+      <div className="bg-white dark:bg-zinc-900 border border-orange-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-orange-100 dark:bg-zinc-800 text-orange-600 dark:text-orange-400 rounded-xl">
+              <Calculator className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                Standard Leave Accrual Calculator
+              </h2>
+              <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                Australian National Employment Standards (NES)
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowDescription((prev) => !prev)}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 hover:bg-orange-100 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 rounded-xl transition-colors cursor-pointer shrink-0"
+          >
+            <span>{showDescription ? 'Hide description' : 'Show description'}</span>
+            {showDescription ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        </div>
+
+        {showDescription && (
+          <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed space-y-2 animate-fadeIn">
+            <p>
+              Calculates routine pay-run leave accruals based on Australian National Employment Standards (NES) or custom company policies. Computes progressive annual leave (4 weeks per year) and personal/carer&apos;s leave (10 days per year) accruals from total paid hours worked.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* 1. EMPLOYEE & PAY RUN DETAILS */}
       <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
         {/* Banner Header */}

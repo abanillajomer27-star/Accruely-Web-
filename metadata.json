@@ -1,6 +1,6 @@
 {
   "name": "Accruely",
-  "description": "Australian payroll suite featuring Leave Accrual, PL Opening Balance with dual entitlement reconciliation, and Standard OT Adjustment calculators.",
+  "description": "Australian payroll suite featuring Leave Accrual, PL Opening Balance with dual entitlement reconciliation, Standard OT Adjustment, and Weekend Pay calculators.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

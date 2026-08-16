@@ -6,6 +6,8 @@ import {
   PeriodAccrualResults,
   StandardOTAdjustmentInputs,
   StandardOTAdjustmentResults,
+  WeekendPayInputs,
+  WeekendPayResults,
 } from '../types';
 
 /**
@@ -512,6 +514,235 @@ ADJUSTED STANDARD OT:      ${formatNum(results.adjustedStandardOT, 2)} hrs (${fo
 ==========================================
 
 ==========================================
-Accruely - Made by Jomer Abanilla, CFMS
+Accruely • Australian Payroll Tools
+==========================================`;
+}
+
+/**
+ * Safely parses numbers from user text or clipboard paste,
+ * handling currency symbols ($ € £ ¥), commas, percent signs (%), units, and whitespace.
+ */
+export function parseFormattedNumber(input: string | number): number {
+  if (typeof input === 'number') {
+    return isNaN(input) ? 0 : input;
+  }
+  if (!input || typeof input !== 'string') return 0;
+
+  // Clean string: remove $, €, £, ¥, commas, %, spaces
+  let cleaned = input.trim().replace(/[$€£¥,%\s]/g, '');
+  // Keep numbers, decimal point, and minus sign
+  cleaned = cleaned.replace(/[^0-9.-]/g, '');
+
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * WEEKEND PAY CALCULATOR
+ *
+ * Supports:
+ * 1. Ordinary Hours:
+ *    Multiplier = Weekend Percentage ÷ 100
+ *    Weekend Pay Rate = Ordinary Hourly Rate × Multiplier
+ *    Total Weekend Pay = Weekend Pay Rate × Hours Worked
+ * 2. Tiered Overtime:
+ *    First Tier Hours = MIN(Total OT Hours, Threshold Hours)
+ *    Remaining Hours = MAX(Total OT Hours - Threshold Hours, 0)
+ *    First Tier Pay = Ordinary Rate × First OT Multiplier × First Tier Hours
+ *    Higher Tier Pay = Ordinary Rate × Higher OT Multiplier × Remaining Hours
+ *    Total Overtime Pay = First Tier Pay + Higher Tier Pay
+ */
+export function calculateWeekendPay(inputs: WeekendPayInputs): WeekendPayResults {
+  const isTieredOvertime = inputs.workType === 'Overtime';
+  const ordinaryRate = Math.max(0, Number(inputs.ordinaryHourlyRate) || 0);
+
+  // --- ORDINARY HOURS CALCULATION ---
+  const percentage = Math.max(0, Number(inputs.weekendRatePercentage) || 0);
+  const hours = Math.max(0, Number(inputs.hoursWorked) || 0);
+  const multiplier = percentage / 100;
+  const weekendPayRate = ordinaryRate * multiplier;
+  const totalOrdinaryPay = weekendPayRate * hours;
+
+  // Formatted Ordinary Equation: $30.00 × 150% × 6.00 = $270.00
+  const formattedOrdinary = `$${formatNum(ordinaryRate, 2)}`;
+  const formattedPercent = `${percentage % 1 === 0 ? percentage.toFixed(0) : percentage.toFixed(2)}%`;
+  const formattedHours = formatNum(hours, 2);
+  const formattedOrdinaryTotal = `$${formatNum(totalOrdinaryPay, 2)}`;
+  let breakdownEquation = `${formattedOrdinary} × ${formattedPercent} × ${formattedHours} = ${formattedOrdinaryTotal}`;
+
+  // --- TIERED OVERTIME CALCULATION ---
+  const firstOtRatePercentage = Math.max(0, Number(inputs.firstOtRatePercentage) || 0);
+  const higherOtRatePercentage = Math.max(0, Number(inputs.higherOtRatePercentage) || 0);
+  const higherRateThresholdHours = Math.max(0, Number(inputs.higherRateThresholdHours) || 0);
+  const totalOvertimeHours = Math.max(0, Number(inputs.totalOtHours) || 0);
+
+  const firstOtMultiplier = firstOtRatePercentage / 100;
+  const higherOtMultiplier = higherOtRatePercentage / 100;
+
+  const firstTierHourlyRate = ordinaryRate * firstOtMultiplier;
+  const higherTierHourlyRate = ordinaryRate * higherOtMultiplier;
+
+  const firstTierHours = Math.min(totalOvertimeHours, higherRateThresholdHours);
+  const remainingHours = Math.max(totalOvertimeHours - higherRateThresholdHours, 0);
+
+  const firstTierPay = ordinaryRate * firstOtMultiplier * firstTierHours;
+  const higherTierPay = ordinaryRate * higherOtMultiplier * remainingHours;
+  const totalOvertimePay = firstTierPay + higherTierPay;
+
+  if (isTieredOvertime) {
+    const formattedFirstPercent = `${
+      firstOtRatePercentage % 1 === 0
+        ? firstOtRatePercentage.toFixed(0)
+        : firstOtRatePercentage.toFixed(2)
+    }%`;
+    const formattedHigherPercent = `${
+      higherOtRatePercentage % 1 === 0
+        ? higherOtRatePercentage.toFixed(0)
+        : higherOtRatePercentage.toFixed(2)
+    }%`;
+
+    const firstEq = `${formattedOrdinary} × ${formattedFirstPercent} × ${formatNum(firstTierHours, 2)} = $${formatNum(firstTierPay, 2)}`;
+
+    if (remainingHours > 0) {
+      const higherEq = `${formattedOrdinary} × ${formattedHigherPercent} × ${formatNum(remainingHours, 2)} = $${formatNum(higherTierPay, 2)}`;
+      breakdownEquation = `${firstEq} | ${higherEq} | Total: $${formatNum(totalOvertimePay, 2)}`;
+    } else {
+      breakdownEquation = `${firstEq} (Total: $${formatNum(totalOvertimePay, 2)})`;
+    }
+  }
+
+  const totalWeekendPay = isTieredOvertime ? totalOvertimePay : totalOrdinaryPay;
+
+  return {
+    isTieredOvertime,
+    multiplier,
+    weekendPayRate,
+    hoursWorked: hours,
+    breakdownEquation,
+    firstOtRatePercentage,
+    firstOtMultiplier,
+    firstTierHourlyRate,
+    firstTierHours,
+    firstTierPay,
+    higherOtRatePercentage,
+    higherOtMultiplier,
+    higherTierHourlyRate,
+    higherRateThresholdHours,
+    remainingHours,
+    higherTierPay,
+    totalOvertimeHours,
+    totalOvertimePay,
+    totalWeekendPay,
+  };
+}
+
+export function generateWeekendPayStatementText(
+  inputs: WeekendPayInputs,
+  results: WeekendPayResults
+): string {
+  const dateStr = new Date().toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  if (inputs.workType === 'Overtime') {
+    const formattedFirstPercent = `${
+      inputs.firstOtRatePercentage % 1 === 0
+        ? inputs.firstOtRatePercentage.toFixed(0)
+        : inputs.firstOtRatePercentage.toFixed(2)
+    }%`;
+    const formattedHigherPercent = `${
+      inputs.higherOtRatePercentage % 1 === 0
+        ? inputs.higherOtRatePercentage.toFixed(0)
+        : inputs.higherOtRatePercentage.toFixed(2)
+    }%`;
+
+    return `==========================================
+ACCRUELY - WEEKEND OVERTIME STATEMENT
+Generated on: ${dateStr}
+Reference: Australian Award / Agreement Tiered Overtime Calculation
+==========================================
+
+EMPLOYEE & SHIFT DETAILS
+------------------------------------------
+Employee:        ${inputs.employeeName || 'Unspecified Employee'}
+Employee Type:   ${inputs.employeeType}
+Day Worked:      ${inputs.dayWorked}
+Work Type:       Overtime (Tiered Calculation)
+
+RATE & THRESHOLD PARAMETERS
+------------------------------------------
+Ordinary Hourly Rate:    $${formatNum(inputs.ordinaryHourlyRate, 2)}/hr
+First Overtime Rate:     ${formattedFirstPercent} (${results.firstOtMultiplier.toFixed(2)}× = $${formatNum(results.firstTierHourlyRate, 2)}/hr)
+Higher Overtime Rate:    ${formattedHigherPercent} (${results.higherOtMultiplier.toFixed(2)}× = $${formatNum(results.higherTierHourlyRate, 2)}/hr)
+Higher Rate Threshold:   ${formatNum(inputs.higherRateThresholdHours, 2)} hrs
+Total Overtime Hours:    ${formatNum(inputs.totalOtHours, 2)} hrs
+
+TIERED OVERTIME BREAKDOWN
+------------------------------------------
+First Tier:   $${formatNum(results.firstTierHourlyRate, 2)}/hr × ${formatNum(results.firstTierHours, 2)} hrs = $${formatNum(results.firstTierPay, 2)}
+Higher Tier:  $${formatNum(results.higherTierHourlyRate, 2)}/hr × ${formatNum(results.remainingHours, 2)} hrs = $${formatNum(results.higherTierPay, 2)}
+
+CALCULATION EQUATIONS
+------------------------------------------
+• First Tier:   $${formatNum(inputs.ordinaryHourlyRate, 2)} × ${formattedFirstPercent} × ${formatNum(results.firstTierHours, 2)} = $${formatNum(results.firstTierPay, 2)}
+${
+  results.remainingHours > 0
+    ? `• Higher Tier:  $${formatNum(inputs.ordinaryHourlyRate, 2)} × ${formattedHigherPercent} × ${formatNum(results.remainingHours, 2)} = $${formatNum(results.higherTierPay, 2)}
+• Total Sum:    $${formatNum(results.firstTierPay, 2)} + $${formatNum(results.higherTierPay, 2)} = $${formatNum(results.totalOvertimePay, 2)}`
+    : `• Higher Tier:  Not applicable (Hours do not exceed ${formatNum(inputs.higherRateThresholdHours, 2)} hr threshold)`
+}
+
+TOTAL SUMMARY
+==========================================
+TOTAL OVERTIME PAY: $${formatNum(results.totalOvertimePay, 2)}
+==========================================
+
+NOTICE:
+Overtime rates and thresholds can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Verify the applicable rate and threshold before processing payroll.
+
+==========================================
+Accruely • Australian Payroll Tools
+==========================================`;
+  }
+
+  const formattedPercent = `${
+    inputs.weekendRatePercentage % 1 === 0
+      ? inputs.weekendRatePercentage.toFixed(0)
+      : inputs.weekendRatePercentage.toFixed(2)
+  }%`;
+
+  return `==========================================
+ACCRUELY - WEEKEND PAY STATEMENT
+Generated on: ${dateStr}
+Reference: Australian Award / Agreement Weekend Penalty Calculation
+==========================================
+
+EMPLOYEE & SHIFT DETAILS
+------------------------------------------
+Employee:        ${inputs.employeeName || 'Unspecified Employee'}
+Employee Type:   ${inputs.employeeType}
+Day Worked:      ${inputs.dayWorked}
+Work Type:       ${inputs.workType}
+
+RATE & HOURS BREAKDOWN
+------------------------------------------
+Ordinary Rate:    $${formatNum(inputs.ordinaryHourlyRate, 2)}/hr
+Weekend Rate:     ${formattedPercent} (Multiplier: ${results.multiplier.toFixed(2)}×)
+Weekend Pay Rate: $${formatNum(results.weekendPayRate, 2)}/hr
+Hours Worked:     ${formatNum(inputs.hoursWorked, 2)} hrs
+
+CALCULATION BREAKDOWN
+------------------------------------------
+${results.breakdownEquation}
+
+TOTAL SUMMARY
+==========================================
+TOTAL WEEKEND PAY: $${formatNum(results.totalWeekendPay, 2)}
+==========================================
+
+==========================================
+Accruely • Australian Payroll Tools
 ==========================================`;
 }

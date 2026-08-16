@@ -23,6 +23,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'PL Opening Balance Calculator';
       case 'standard-ot-adjustment':
         return 'Standard OT Adjustment Calculator';
+      case 'weekend-pay':
+        return 'Weekend Pay Calculator';
       case 'settings':
         return 'Settings & Preferences';
       case 'about':
@@ -37,7 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   const isCalculatorTab =
     activeTab === 'leave-accrual' ||
     activeTab === 'pl-opening-balance' ||
-    activeTab === 'standard-ot-adjustment';
+    activeTab === 'standard-ot-adjustment' ||
+    activeTab === 'weekend-pay';
 
   return (
     <header className="bg-orange-600 dark:bg-zinc-900 text-white shadow-md sticky top-0 z-30 border-b border-orange-700 dark:border-zinc-800 transition-colors">
@@ -71,6 +74,8 @@ export const Header: React.FC<HeaderProps> = ({
                   ? 'Dual Entitlement & Xero Reconciler'
                   : activeTab === 'standard-ot-adjustment'
                   ? 'Prorated Standard OT for LWOP'
+                  : activeTab === 'weekend-pay'
+                  ? 'Penalty Rates & Total Weekend Pay'
                   : 'Pay Run & Period Accruals'}
               </p>
             )}

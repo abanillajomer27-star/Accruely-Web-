@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
+import { parseFormattedNumber } from '../utils/calculator';
 
 interface EditFieldModalProps {
   isOpen: boolean;
@@ -35,12 +36,21 @@ export const EditFieldModal: React.FC<EditFieldModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (type === 'number') {
-      const num = parseFloat(val);
-      onSave(isNaN(num) ? 0 : num);
+      const num = parseFormattedNumber(val);
+      onSave(num);
     } else {
       onSave(val);
     }
     onClose();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (type === 'number') {
+      const pastedData = e.clipboardData.getData('text');
+      if (pastedData) {
+        // Allow default paste, but user can paste "$1,250.50" or "150%" or "7.5"
+      }
+    }
   };
 
   return (
@@ -64,11 +74,14 @@ export const EditFieldModal: React.FC<EditFieldModalProps> = ({
               Enter Value:
             </label>
             <input
-              type={type}
+              type={type === 'number' ? 'text' : type}
+              inputMode={type === 'number' ? 'decimal' : undefined}
               step={step}
               min={min}
               value={val}
               onChange={(e) => setVal(e.target.value)}
+              onPaste={handlePaste}
+              placeholder={type === 'number' ? 'e.g. 30.00 or 1,250.50' : ''}
               className="w-full px-4 py-3 bg-orange-50/60 dark:bg-zinc-800 border-2 border-orange-200 dark:border-zinc-700 rounded-xl focus:border-orange-500 dark:focus:border-orange-500 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none text-zinc-900 dark:text-zinc-100 font-bold text-lg transition-all"
               autoFocus
             />

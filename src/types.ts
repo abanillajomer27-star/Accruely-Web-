@@ -126,10 +126,57 @@ export interface StandardOTAdjustmentResults {
   adjustedStandardOT: number;    // Standard OT × Attendance Percentage
 }
 
+// --- WEEKEND PAY CALCULATOR TYPES ---
+export type EmployeeType = 'Full-time' | 'Part-time' | 'Casual';
+export type DayWorked = 'Saturday' | 'Sunday';
+export type WorkType = 'Ordinary Hours' | 'Overtime';
+
+export interface WeekendPayInputs {
+  employeeName: string;
+  employeeType: EmployeeType;
+  dayWorked: DayWorked;
+  workType: WorkType;
+  ordinaryHourlyRate: number;
+  // Ordinary weekend parameters
+  weekendRatePercentage: number;
+  hoursWorked: number;
+  // Tiered overtime parameters
+  firstOtRatePercentage: number;
+  higherOtRatePercentage: number;
+  higherRateThresholdHours: number;
+  totalOtHours: number;
+}
+
+export interface WeekendPayResults {
+  isTieredOvertime: boolean;
+  // Ordinary Results
+  multiplier: number;
+  weekendPayRate: number;
+  hoursWorked: number;
+  breakdownEquation: string;
+  // Tiered Overtime Results
+  firstOtRatePercentage: number;
+  firstOtMultiplier: number;
+  firstTierHourlyRate: number;
+  firstTierHours: number;
+  firstTierPay: number;
+  higherOtRatePercentage: number;
+  higherOtMultiplier: number;
+  higherTierHourlyRate: number;
+  higherRateThresholdHours: number;
+  remainingHours: number;
+  higherTierPay: number;
+  totalOvertimeHours: number;
+  totalOvertimePay: number;
+  // Overall Final Result
+  totalWeekendPay: number;
+}
+
 export type ActiveTab =
   | 'leave-accrual'
   | 'pl-opening-balance'
   | 'standard-ot-adjustment'
+  | 'weekend-pay'
   | 'settings'
   | 'about'
   | 'privacy-policy';
