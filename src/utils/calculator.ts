@@ -10,7 +10,14 @@ import {
   WeekendPayResults,
   SplitTierResult,
   SplitHoursResult,
+  WeekendCalculatorMode,
+  CategoryResultItem,
+  DayWorked,
+  DaySplitResult,
+  PayrollCategoryItem,
+  DayCategorySplitItem,
 } from '../types';
+import { getAwardRuleById } from './weekendRules';
 
 /**
  * Calculates completed full years of service and remaining weeks after the last anniversary.
@@ -590,186 +597,392 @@ export function parseFormattedNumber(input: string | number): number {
 }
 
 /**
- * REBUILT WEEKEND PAY & PENALTY RATE CALCULATOR ENGINE
+ * TIMESHEET SPLIT & RECONCILIATION CALCULATOR ENGINE
  *
- * Core Principles:
- * 1. Bookkeeper enters ONE total number of hours worked (e.g. 7.60, 15.20, 10.50, 2.75).
- * 2. Does NOT assume a universal award rule (e.g. 2-hr vs 3-hr threshold or overtime vs ordinary).
- * 3. Automatically distributes/splits the total hours across configurable rate tiers (e.g. First 2.00 hrs @ 150%, Remaining @ 200%).
- * 4. Calculates exact decimal pay per tier and total pay.
- * 5. Reconciles allocated hours against original timesheet hours (ensures Difference = 0.00).
- * 6. Supports optional minimum engagement/payment comparison.
- * 7. Supports optional shift start/end duration reconciliation.
+ * For Australian bookkeepers and accountants reviewing timesheets from systems
+ * like Deputy, MYOB, Excel, etc., and transferring/reconciling them into Xero.
+ *
+ * Answers:
+ * "I have X total hours on the timesheet. How do I split those hours between the
+ * applicable payroll categories, and do all my split hours reconcile back to the original timesheet total?"
  */
 export function calculateWeekendPay(inputs: WeekendPayInputs): WeekendPayResults {
+  const mode: WeekendCalculatorMode = inputs.mode || 'single';
   const ordinaryHourlyRate = Math.max(0, parseFormattedNumber(inputs.ordinaryHourlyRate) || 0);
-  const totalHoursWorked = Math.max(
-    0,
-    parseFormattedNumber(inputs.totalHoursWorked ?? inputs.splitTotalHours ?? inputs.hoursWorked ?? 0)
-  );
 
-  const rateTreatment = inputs.rateTreatment || 'Use one applicable rate';
-  const awardReference = (inputs.awardReference || '').trim();
+  // 1. Determine Saturday and Sunday Timesheet Hours
+  let satHours = 0;
+  let sunHours = 0;
+  let weeklyTotalHours = 0;
+  let weekdayOrdinaryTotal = 0;
 
-  // Minimum engagement handling
-  const applyMinimumPayment = Boolean(inputs.applyMinimumPayment);
-  const minHoursParam = Math.max(0, Number(inputs.minimumHours) || 0);
-  const isMinimumPaymentApplied = applyMinimumPayment && minHoursParam > totalHoursWorked;
-  const payableHours = isMinimumPaymentApplied ? minHoursParam : totalHoursWorked;
-  const minimumShortfallHours = isMinimumPaymentApplied
-    ? Math.round((minHoursParam - totalHoursWorked) * 10000) / 10000
-    : 0;
+  if (inputs.saturdayHours !== undefined && inputs.saturdayHours !== null && inputs.saturdayHours !== '') {
+    satHours = Math.max(0, parseFormattedNumber(inputs.saturdayHours) || 0);
+  }
+  if (inputs.sundayHours !== undefined && inputs.sundayHours !== null && inputs.sundayHours !== '') {
+    sunHours = Math.max(0, parseFormattedNumber(inputs.sundayHours) || 0);
+  }
 
-  // Active tiers
-  const rawTiers =
-    inputs.tiers && inputs.tiers.length > 0
-      ? inputs.tiers
-      : inputs.splitTiers && inputs.splitTiers.length > 0
-      ? inputs.splitTiers
-      : [
-          { id: 'tier-1', name: 'First 2.00 hours', capHours: 2.0, ratePercentage: 150 },
-          { id: 'tier-2', name: 'Remaining hours', capHours: null, ratePercentage: 200 },
-        ];
+  // Fallback to weeklyDays if provided and sat/sun were not directly set
+  const days = inputs.weeklyDays && inputs.weeklyDays.length > 0 ? inputs.weeklyDays : [];
+  const dailyBreakdowns: DaySplitResult[] = [];
 
-  let remainingPool = payableHours;
-  let totalAllocatedHours = 0;
-  let totalWeekendPay = 0;
-  const tierResults: SplitTierResult[] = [];
-  const calculationSteps: string[] = [];
+  if (days.length > 0) {
+    days.forEach((day) => {
+      const hrs = Math.max(0, parseFormattedNumber(day.hours) || 0);
+      weeklyTotalHours += hrs;
+      const nameLower = (day.dayName || '').toLowerCase().trim();
 
-  rawTiers.forEach((tier, index) => {
-    const isLast = index === rawTiers.length - 1;
-    const cap = tier.capHours;
-    let allocated = 0;
-
-    if (cap === null || isLast) {
-      allocated = Math.max(0, remainingPool);
-      remainingPool = 0;
-    } else {
-      const numericCap = Math.max(0, Number(cap) || 0);
-      allocated = Math.min(Math.max(0, remainingPool), numericCap);
-      remainingPool = Math.max(0, remainingPool - allocated);
-    }
-
-    allocated = Math.round(allocated * 10000) / 10000;
-
-    const ratePercentage = Math.max(0, Number(tier.ratePercentage) || 0);
-    const tierMultiplier = ratePercentage / 100;
-    const tierHourlyRate = Math.round(ordinaryHourlyRate * tierMultiplier * 10000) / 10000;
-    const tierPay = Math.round(allocated * tierHourlyRate * 100) / 100;
-
-    totalAllocatedHours += allocated;
-    totalWeekendPay += tierPay;
-
-    const formattedPercent = `${
-      ratePercentage % 1 === 0 ? ratePercentage.toFixed(0) : ratePercentage.toFixed(2)
-    }%`;
-
-    let label = tier.name;
-    if (!label) {
-      if (cap !== null && !isLast) {
-        label = `First ${formatNum(cap, 2)} hrs @ ${formattedPercent}`;
+      if (nameLower.includes('sat')) {
+        if (inputs.saturdayHours === undefined || inputs.saturdayHours === null || inputs.saturdayHours === '') {
+          satHours += hrs;
+        }
+      } else if (nameLower.includes('sun')) {
+        if (inputs.sundayHours === undefined || inputs.sundayHours === null || inputs.sundayHours === '') {
+          sunHours += hrs;
+        }
       } else {
-        label = `Remaining hrs @ ${formattedPercent}`;
+        weekdayOrdinaryTotal += hrs;
       }
-    }
-
-    const equation = `${formatNum(allocated, 2)} hrs @ ${formattedPercent} ($${formatNum(tierHourlyRate, 2)}/hr) = $${formatNum(tierPay, 2)}`;
-    const step = `$${formatNum(ordinaryHourlyRate, 2)} × ${formattedPercent} = $${formatNum(tierHourlyRate, 2)}/hr | $${formatNum(tierHourlyRate, 2)} × ${formatNum(allocated, 2)} hrs = $${formatNum(tierPay, 2)}`;
-
-    tierResults.push({
-      id: tier.id || `tier-${index + 1}`,
-      tierIndex: index + 1,
-      label,
-      capHours: isLast ? null : cap,
-      ratePercentage,
-      multiplier: tierMultiplier,
-      tierHourlyRate,
-      allocatedHours: allocated,
-      tierPay,
-      equation,
     });
+  }
 
-    calculationSteps.push(step);
-  });
-
-  totalAllocatedHours = Math.round(totalAllocatedHours * 10000) / 10000;
-  totalWeekendPay = Math.round(totalWeekendPay * 100) / 100;
-
-  const hoursDifference =
-    Math.round(Math.abs(payableHours - totalAllocatedHours) * 10000) / 10000;
-  const isReconciled = hoursDifference < 0.0001;
-
-  // Shift duration reconciliation (optional)
-  let calculatedShiftDuration: number | null = null;
-  let shiftDifference: number | null = null;
-  if (inputs.enableShiftTimes && inputs.shiftStartTime && inputs.shiftEndTime) {
-    calculatedShiftDuration = calculateShiftDuration(
-      inputs.shiftStartTime,
-      inputs.shiftEndTime,
-      inputs.unpaidBreakMinutes || 0
-    );
-    if (calculatedShiftDuration !== null) {
-      shiftDifference =
-        Math.round(Math.abs(totalHoursWorked - calculatedShiftDuration) * 10000) / 10000;
+  // Fallback if totalTimesheetHours was supplied for single day
+  if (satHours === 0 && sunHours === 0 && inputs.totalTimesheetHours) {
+    const totalSingle = Math.max(0, parseFormattedNumber(inputs.totalTimesheetHours) || 0);
+    const dayStr = (inputs.dayWorked || '').toString().toLowerCase();
+    if (dayStr.includes('sun')) {
+      sunHours = totalSingle;
+    } else {
+      satHours = totalSingle;
     }
   }
 
-  // Legacy fields for backward compatibility
-  const splitHoursResult: SplitHoursResult = {
-    totalInputHours: totalHoursWorked,
-    totalAllocatedHours,
-    hoursDifference,
-    isReconciled,
-    totalSplitPay: totalWeekendPay,
-    tierResults,
+  satHours = Math.round(satHours * 10000) / 10000;
+  sunHours = Math.round(sunHours * 10000) / 10000;
+  const weekendTotalHours = Math.round((satHours + sunHours) * 10000) / 10000;
+
+  // 2. Fetch Selected Rule Engine
+  const selectedRuleId = inputs.selectedRuleId || inputs.payRule || 'casual-loaded';
+  const awardRule = getAwardRuleById(selectedRuleId);
+
+  // Helper to build categories and allocate for a shift from rule or custom configs
+  const allocateForDay = (
+    dayTotalHours: number,
+    dayName: 'Saturday' | 'Sunday',
+    configuredCats?: PayrollCategoryItem[],
+    customCapOverride?: string
+  ): { splits: DayCategorySplitItem[]; totalAllocated: number; ordHours: number; otHours: number } => {
+    if (dayTotalHours <= 0 && (!configuredCats || configuredCats.length === 0)) {
+      const ruleConfig = dayName === 'Saturday' ? awardRule.saturday : awardRule.sunday;
+      const emptySplits: DayCategorySplitItem[] = ruleConfig.tiers.map((tier, idx) => ({
+        id: `${dayName.toLowerCase()}-split-${idx}`,
+        name: tier.name,
+        hours: 0,
+        allocatedHours: 0,
+        multiplier: tier.multiplier,
+        ratePercentage: tier.ratePercentage,
+        hourlyRate: Math.round(ordinaryHourlyRate * tier.multiplier * 10000) / 10000,
+        pay: 0,
+      }));
+      return { splits: emptySplits, totalAllocated: 0, ordHours: 0, otHours: 0 };
+    }
+
+    // If user provided custom categories / manual edit for this day
+    if (configuredCats && configuredCats.length > 0) {
+      let running = dayTotalHours;
+      const splits: DayCategorySplitItem[] = [];
+      let ordHours = 0;
+      let otHours = 0;
+
+      configuredCats.forEach((cat, idx) => {
+        const isLast = idx === configuredCats.length - 1;
+        let allocated = 0;
+
+        if (cat.allocationType === 'auto-remaining' || (isLast && (cat.hours === undefined || cat.hours === null || cat.hours === ''))) {
+          allocated = Math.max(0, running);
+          running = 0;
+        } else if (cat.capHours !== null && cat.capHours !== undefined && cat.capHours !== '') {
+          const cap = Math.max(0, parseFormattedNumber(cat.capHours) || 0);
+          allocated = Math.min(Math.max(0, running), cap);
+          running = Math.max(0, Math.round((running - allocated) * 10000) / 10000);
+        } else {
+          const direct = Math.max(0, parseFormattedNumber(cat.hours) || 0);
+          allocated = direct;
+          running = Math.max(0, Math.round((running - allocated) * 10000) / 10000);
+        }
+
+        allocated = Math.round(allocated * 10000) / 10000;
+        const mult =
+          cat.multiplier !== undefined && cat.multiplier !== null && cat.multiplier !== ''
+            ? parseFormattedNumber(cat.multiplier) || 1.0
+            : (parseFormattedNumber(cat.ratePercentage) || 100) / 100;
+        const ratePct = cat.ratePercentage !== undefined ? Number(cat.ratePercentage) : Math.round(mult * 100);
+        const hourlyRate = Math.round(ordinaryHourlyRate * mult * 10000) / 10000;
+        const pay = Math.round(allocated * hourlyRate * 100) / 100;
+
+        if (cat.name.toLowerCase().includes('ordinary') || (cat.name.toLowerCase().includes('casual') && !cat.name.toLowerCase().includes('overtime'))) {
+          ordHours += allocated;
+        } else {
+          otHours += allocated;
+        }
+
+        splits.push({
+          id: cat.id || `${dayName.toLowerCase()}-split-${idx}`,
+          name: cat.name,
+          hours: allocated,
+          allocatedHours: allocated,
+          multiplier: mult,
+          ratePercentage: ratePct,
+          hourlyRate,
+          pay,
+        });
+      });
+
+      const totalAllocated = Math.round(splits.reduce((s, c) => s + c.allocatedHours, 0) * 10000) / 10000;
+      return { splits, totalAllocated, ordHours, otHours };
+    }
+
+    // Otherwise, allocate using the selected Award Rule tiers
+    const ruleDay = dayName === 'Saturday' ? awardRule.saturday : awardRule.sunday;
+    let running = dayTotalHours;
+    const splits: DayCategorySplitItem[] = [];
+    let ordHours = 0;
+    let otHours = 0;
+
+    ruleDay.tiers.forEach((tier, idx) => {
+      let allocated = 0;
+      const isLast = idx === ruleDay.tiers.length - 1;
+
+      if (tier.isRemaining || isLast) {
+        allocated = Math.max(0, running);
+        running = 0;
+      } else {
+        let cap = tier.capHours ?? null;
+        if (customCapOverride !== undefined && customCapOverride !== null && customCapOverride !== '') {
+          cap = parseFormattedNumber(customCapOverride);
+        }
+        if (cap !== null && cap >= 0) {
+          allocated = Math.min(Math.max(0, running), cap);
+          running = Math.max(0, Math.round((running - allocated) * 10000) / 10000);
+        } else {
+          allocated = Math.max(0, running);
+          running = 0;
+        }
+      }
+
+      allocated = Math.round(allocated * 10000) / 10000;
+      const mult = tier.multiplier;
+      const ratePct = tier.ratePercentage;
+      const hourlyRate = Math.round(ordinaryHourlyRate * mult * 10000) / 10000;
+      const pay = Math.round(allocated * hourlyRate * 100) / 100;
+
+      if (tier.name.toLowerCase().includes('ordinary') || (tier.name.toLowerCase().includes('casual') && !tier.name.toLowerCase().includes('overtime'))) {
+        ordHours += allocated;
+      } else {
+        otHours += allocated;
+      }
+
+      splits.push({
+        id: `${dayName.toLowerCase()}-rule-tier-${idx}`,
+        name: tier.name,
+        hours: allocated,
+        allocatedHours: allocated,
+        multiplier: mult,
+        ratePercentage: ratePct,
+        hourlyRate,
+        pay,
+      });
+    });
+
+    const totalAllocated = Math.round(splits.reduce((s, c) => s + c.allocatedHours, 0) * 10000) / 10000;
+    return { splits, totalAllocated, ordHours, otHours };
   };
 
+  // Saturday Allocation
+  const satCapOverride = inputs.saturdayCap ?? (selectedRuleId.includes('casual') ? inputs.casualShiftCap : undefined);
+  const satConfigCats = inputs.saturdayConfig?.categories;
+  const satAllocResult = allocateForDay(satHours, 'Saturday', satConfigCats, satCapOverride);
+
+  const satDiff = Math.round((satHours - satAllocResult.totalAllocated) * 10000) / 10000;
+  const saturdayBreakdown: DaySplitResult = {
+    dayName: 'Saturday',
+    timesheetHours: satHours,
+    categorySplits: satAllocResult.splits,
+    ordinaryHours: satAllocResult.ordHours,
+    overtimeHours: satAllocResult.otHours,
+    totalAllocated: satAllocResult.totalAllocated,
+    difference: satDiff,
+    isReconciled: Math.abs(satDiff) < 0.0001,
+  };
+
+  // Sunday Allocation
+  const sunCapOverride = inputs.sundayCap ?? (selectedRuleId.includes('casual') ? inputs.casualShiftCap : undefined);
+  const sunConfigCats = inputs.sundayConfig?.categories;
+  const sunAllocResult = allocateForDay(sunHours, 'Sunday', sunConfigCats, sunCapOverride);
+
+  const sunDiff = Math.round((sunHours - sunAllocResult.totalAllocated) * 10000) / 10000;
+  const sundayBreakdown: DaySplitResult = {
+    dayName: 'Sunday',
+    timesheetHours: sunHours,
+    categorySplits: sunAllocResult.splits,
+    ordinaryHours: sunAllocResult.ordHours,
+    overtimeHours: sunAllocResult.otHours,
+    totalAllocated: sunAllocResult.totalAllocated,
+    difference: sunDiff,
+    isReconciled: Math.abs(sunDiff) < 0.0001,
+  };
+
+  const totalTimesheetHours = weekendTotalHours > 0 ? weekendTotalHours : (parseFormattedNumber(inputs.totalTimesheetHours) || 0);
+
+  const totalAllocatedHours = Math.round((satAllocResult.totalAllocated + sunAllocResult.totalAllocated) * 10000) / 10000;
+  const hoursDifference = Math.round((totalTimesheetHours - totalAllocatedHours) * 10000) / 10000;
+  const isReconciled = Math.abs(hoursDifference) < 0.0001 && saturdayBreakdown.isReconciled && sundayBreakdown.isReconciled;
+
+  let reconciliationStatus: 'reconciled' | 'under-allocated' | 'over-allocated' = 'reconciled';
+  let statusMessage = '✓ RECONCILED';
+
+  if (!isReconciled && totalTimesheetHours > 0) {
+    if (hoursDifference > 0) {
+      reconciliationStatus = 'under-allocated';
+      statusMessage = `${formatNum(hoursDifference, 2)} h variance remaining`;
+    } else {
+      reconciliationStatus = 'over-allocated';
+      statusMessage = `${formatNum(Math.abs(hoursDifference), 2)} h over-allocated`;
+    }
+  }
+
+  // Build aggregated Category Results
+  const categoryResults: CategoryResultItem[] = [];
+  const tierResults: SplitTierResult[] = [];
+  let totalGrossPay = 0;
+  const calculationSteps: string[] = [];
+
+  const allSplits = [...satAllocResult.splits, ...sunAllocResult.splits];
+  const catMap = new Map<string, { allocated: number; mult: number; ratePct: number }>();
+
+  allSplits.forEach((sp) => {
+    if (sp.allocatedHours > 0 || allSplits.length <= 2) {
+      const existing = catMap.get(sp.name);
+      if (existing) {
+        existing.allocated += sp.allocatedHours;
+      } else {
+        catMap.set(sp.name, {
+          allocated: sp.allocatedHours,
+          mult: sp.multiplier ?? 1.0,
+          ratePct: sp.ratePercentage ?? 100,
+        });
+      }
+    }
+  });
+
+  let catIdx = 1;
+  catMap.forEach((data, name) => {
+    const allocated = Math.round(data.allocated * 10000) / 10000;
+    const hourlyRate = Math.round(ordinaryHourlyRate * data.mult * 10000) / 10000;
+    const categoryPay = Math.round(allocated * hourlyRate * 100) / 100;
+    totalGrossPay += categoryPay;
+
+    const formula =
+      ordinaryHourlyRate > 0
+        ? `$${formatNum(ordinaryHourlyRate, 2)} × ${formatNum(allocated, 2)} hrs × ${data.mult}x = $${formatNum(categoryPay, 2)}`
+        : `${formatNum(allocated, 2)} hrs`;
+
+    categoryResults.push({
+      id: `cat-${catIdx}`,
+      name,
+      allocatedHours: allocated,
+      multiplier: data.mult,
+      ratePercentage: data.ratePct,
+      hourlyRate,
+      categoryPay,
+      formula,
+    });
+
+    tierResults.push({
+      id: `tier-${catIdx}`,
+      tierIndex: catIdx,
+      label: name,
+      capHours: null,
+      ratePercentage: data.ratePct,
+      multiplier: data.mult,
+      tierHourlyRate: hourlyRate,
+      allocatedHours: allocated,
+      tierPay: categoryPay,
+      equation: `${formatNum(allocated, 2)} hrs @ ${data.mult}x = $${formatNum(categoryPay, 2)}`,
+    });
+
+    if (ordinaryHourlyRate > 0) {
+      calculationSteps.push(formula);
+    }
+    catIdx++;
+  });
+
+  totalGrossPay = Math.round(totalGrossPay * 100) / 100;
+  const hasPayCalculation = ordinaryHourlyRate > 0;
+
   return {
-    dayWorked: inputs.dayWorked || 'Saturday',
-    workType: inputs.workType || 'Overtime',
-    rateTreatment,
-    awardReference,
-    ordinaryHourlyRate,
-    totalHoursWorked,
-    payableHours,
-    isMinimumPaymentApplied,
-    minimumHours: minHoursParam,
-    minimumShortfallHours,
-    tierResults,
+    mode,
+    totalTimesheetHours,
     totalAllocatedHours,
     hoursDifference,
     isReconciled,
-    totalWeekendPay,
+    reconciliationStatus,
+    statusMessage,
+    categoryResults,
+    weeklyTotalHours,
+    weekdayOrdinaryTotal,
+    remainingOrdinaryCapacity: 0,
+    weekendTotalHours,
+    weekendOrdinaryHours: satAllocResult.ordHours + sunAllocResult.ordHours,
+    weekendOvertimeHours: satAllocResult.otHours + sunAllocResult.otHours,
+    totalWeekOrdinaryHours: satAllocResult.ordHours + sunAllocResult.ordHours,
+    totalWeekOvertimeHours: satAllocResult.otHours + sunAllocResult.otHours,
+    saturdayBreakdown,
+    sundayBreakdown,
+    dailyBreakdowns,
+    hasPayCalculation,
+    ordinaryHourlyRate,
+    totalGrossPay,
+    payrollAmountEntered: null,
+    payrollDifference: null,
+    isPayrollMatched: null,
+    dayWorked: 'Weekend',
+    tierResults,
+    totalWeekendPay: totalGrossPay,
     calculationSteps,
-    calculatedShiftDuration,
-    shiftDifference,
-    // Backward compatibility
+    totalHoursWorked: totalTimesheetHours,
+    workType: inputs.workType || 'Overtime',
+    rateTreatment: inputs.rateTreatment || 'Use one applicable rate',
+    awardReference: inputs.awardReference || '',
+    payableHours: totalTimesheetHours,
+    isMinimumPaymentApplied: false,
+    minimumHours: 0,
+    minimumShortfallHours: 0,
     calculationType: 'Split Hours',
-    isTieredOvertime: inputs.workType === 'Overtime',
-    multiplier: tierResults[0]?.multiplier || 1.5,
-    weekendPayRate: tierResults[0]?.tierHourlyRate || ordinaryHourlyRate * 1.5,
-    hoursWorked: totalHoursWorked,
-    breakdownEquation: tierResults.map((t) => t.equation).join(' | '),
-    firstOtRatePercentage: tierResults[0]?.ratePercentage || 150,
-    firstOtMultiplier: tierResults[0]?.multiplier || 1.5,
-    firstTierHourlyRate: tierResults[0]?.tierHourlyRate || ordinaryHourlyRate * 1.5,
-    firstTierHours: tierResults[0]?.allocatedHours || 0,
-    firstTierPay: tierResults[0]?.tierPay || 0,
-    higherOtRatePercentage: tierResults[1]?.ratePercentage || 200,
-    higherOtMultiplier: tierResults[1]?.multiplier || 2.0,
-    higherTierHourlyRate: tierResults[1]?.tierHourlyRate || ordinaryHourlyRate * 2.0,
-    higherRateThresholdHours: Number(tierResults[0]?.capHours) || 2.0,
-    remainingHours: tierResults[1]?.allocatedHours || 0,
-    higherTierPay: tierResults[1]?.tierPay || 0,
-    totalOvertimeHours: totalHoursWorked,
-    totalOvertimePay: totalWeekendPay,
-    splitHoursResult,
+    isTieredOvertime: true,
+    multiplier: categoryResults[0]?.multiplier || 1.0,
+    weekendPayRate: categoryResults[0]?.hourlyRate || ordinaryHourlyRate,
+    hoursWorked: totalTimesheetHours,
+    breakdownEquation: categoryResults.map((c) => `${c.name}: ${formatNum(c.allocatedHours, 2)}h`).join(' | '),
+    firstOtRatePercentage: categoryResults[0]?.ratePercentage || 100,
+    firstOtMultiplier: categoryResults[0]?.multiplier || 1.0,
+    firstTierHourlyRate: categoryResults[0]?.hourlyRate || ordinaryHourlyRate,
+    firstTierHours: categoryResults[0]?.allocatedHours || 0,
+    firstTierPay: categoryResults[0]?.categoryPay || 0,
+    higherOtRatePercentage: categoryResults[1]?.ratePercentage || 150,
+    higherOtMultiplier: categoryResults[1]?.multiplier || 1.5,
+    higherTierHourlyRate: categoryResults[1]?.hourlyRate || ordinaryHourlyRate * 1.5,
+    higherRateThresholdHours: Number(categoryResults[0]?.allocatedHours) || 0,
+    remainingHours: categoryResults[1]?.allocatedHours || 0,
+    higherTierPay: categoryResults[1]?.categoryPay || 0,
+    totalOvertimeHours: totalTimesheetHours,
+    totalOvertimePay: totalGrossPay,
   };
 }
 
 /**
- * Generates an auditable, bookkeeper-friendly statement text for the Weekend Pay Calculator.
+ * Generates an auditable, bookkeeper-friendly statement text for timesheet splitting & reconciliation.
  */
 export function generateWeekendPayStatementText(
   inputs: WeekendPayInputs,
@@ -781,65 +994,70 @@ export function generateWeekendPayStatementText(
     year: 'numeric',
   });
 
-  const tierLines = results.tierResults
-    .map(
-      (t) =>
-        `  • ${t.label.padEnd(28)} : ${formatNum(t.allocatedHours, 2).padStart(6)} hrs (${formatDecimalToHoursMinutes(t.allocatedHours)}) @ ${String(t.ratePercentage).padStart(3)}% ($${formatNum(t.tierHourlyRate, 2)}/hr) = $${formatNum(t.tierPay, 2)}`
-    )
-    .join('\n');
+  const rule = getAwardRuleById(inputs.selectedRuleId || inputs.payRule);
 
-  const formulaLines = results.tierResults
-    .map(
-      (t) =>
-        `  $${formatNum(results.ordinaryHourlyRate, 2)} × ${t.ratePercentage}% = $${formatNum(t.tierHourlyRate, 2)}/hr | $${formatNum(t.tierHourlyRate, 2)} × ${formatNum(t.allocatedHours, 2)} hrs = $${formatNum(t.tierPay, 2)}`
-    )
-    .join('\n');
+  const satBreakdown = results.saturdayBreakdown;
+  const sunBreakdown = results.sundayBreakdown;
 
-  const awardText = results.awardReference ? `Award / Agreement: ${results.awardReference}\n` : '';
-  const minPaymentText = results.isMinimumPaymentApplied
-    ? `Minimum Engagement Applied: Yes (Worked ${formatNum(results.totalHoursWorked, 2)} hrs, Paid ${formatNum(results.payableHours, 2)} hrs; Top-up: ${formatNum(results.minimumShortfallHours, 2)} hrs)\n`
-    : '';
+  let satText = '';
+  if (satBreakdown && satBreakdown.timesheetHours > 0) {
+    const lines = satBreakdown.categorySplits && satBreakdown.categorySplits.length > 0
+      ? satBreakdown.categorySplits.map(c => `  • ${c.name.padEnd(34)}: ${formatNum(c.allocatedHours, 2)} h`).join('\n')
+      : `  • Total: ${formatNum(satBreakdown.timesheetHours, 2)} h`;
+    const recon = satBreakdown.isReconciled ? '✓ RECONCILED' : `⚠ VARIANCE (${formatNum(Math.abs(satBreakdown.difference ?? 0), 2)} h)`;
+    satText = `
+Saturday — ${formatNum(satBreakdown.timesheetHours, 2)} h:
+${lines}
+  ----------------------------------------
+  Total Allocated : ${formatNum(satBreakdown.totalAllocated, 2)} h
+  Difference      : ${formatNum(Math.abs(satBreakdown.difference ?? 0), 2)} h
+  Status          : ${recon}
+`;
+  }
+
+  let sunText = '';
+  if (sunBreakdown && sunBreakdown.timesheetHours > 0) {
+    const lines = sunBreakdown.categorySplits && sunBreakdown.categorySplits.length > 0
+      ? sunBreakdown.categorySplits.map(c => `  • ${c.name.padEnd(34)}: ${formatNum(c.allocatedHours, 2)} h`).join('\n')
+      : `  • Total: ${formatNum(sunBreakdown.timesheetHours, 2)} h`;
+    const recon = sunBreakdown.isReconciled ? '✓ RECONCILED' : `⚠ VARIANCE (${formatNum(Math.abs(sunBreakdown.difference ?? 0), 2)} h)`;
+    sunText = `
+Sunday — ${formatNum(sunBreakdown.timesheetHours, 2)} h:
+${lines}
+  ----------------------------------------
+  Total Allocated : ${formatNum(sunBreakdown.totalAllocated, 2)} h
+  Difference      : ${formatNum(Math.abs(sunBreakdown.difference ?? 0), 2)} h
+  Status          : ${recon}
+`;
+  }
+
+  const satHrs = satBreakdown ? satBreakdown.timesheetHours : 0;
+  const sunHrs = sunBreakdown ? sunBreakdown.timesheetHours : 0;
+  const totalHrs = results.totalTimesheetHours;
+  const totalAlloc = results.totalAllocatedHours;
+  const diff = Math.abs(results.hoursDifference);
+  const reconStatus = results.isReconciled ? '✓ RECONCILED' : `⚠ VARIANCE: ${formatNum(diff, 2)} h`;
 
   return `==========================================
-ACCRUELY - WEEKEND PAY & PENALTY RATE STATEMENT
+ACCRUELY - WEEKEND PAY & TIMESHEET SPLIT
 Generated on: ${dateStr}
-Reference: Australian Award & Agreement Rate Reconciliation
+Award / Pay Rule: ${rule.name} (${rule.badge})
 ==========================================
-
-EMPLOYEE & SHIFT INFORMATION
+ORIGINAL WEEKEND TIMESHEET
+Saturday: ${formatNum(satHrs, 2)} h
+Sunday:   ${formatNum(sunHrs, 2)} h
+Total:    ${formatNum(totalHrs, 2)} h
 ------------------------------------------
-Employee Name:       ${inputs.employeeName || 'Unspecified Employee'}
-Employee Type:       ${inputs.employeeType}
-Day Worked:          ${results.dayWorked}
-Work Classification: ${results.workType}
-Rate Treatment:      ${results.rateTreatment}
-${awardText}Ordinary Rate:       $${formatNum(results.ordinaryHourlyRate, 2)}/hr
-Total Timesheet:     ${formatNum(results.totalHoursWorked, 2)} hrs (${formatDecimalToHoursMinutes(results.totalHoursWorked)})
-${minPaymentText}
-RATE STRUCTURE BREAKDOWN
+WEEKEND SPLIT BREAKDOWN
+${satText}${sunText}
 ------------------------------------------
-${tierLines}
-
-CALCULATION DETAILS (AUDIT TRAIL)
-------------------------------------------
-${formulaLines}
-Total Calculated Pay = $${formatNum(results.totalWeekendPay, 2)}
-
-HOURS RECONCILIATION
-------------------------------------------
-Original Timesheet Hours: ${formatNum(results.totalHoursWorked, 2)} hrs
-Total Allocated Hours:    ${formatNum(results.totalAllocatedHours, 2)} hrs
-Reconciliation Variance:  ${formatNum(results.hoursDifference, 2)} hrs ${results.isReconciled ? '✓ (100% Reconciled)' : '⚠ (Variance Detected)'}
-
-SUMMARY
+TOTAL RECONCILIATION SUMMARY
+Original Timesheet:  ${formatNum(totalHrs, 2)} h
+Total Allocated:     ${formatNum(totalAlloc, 2)} h
+Difference:          ${formatNum(diff, 2)} h
+Status:              ${reconStatus}
 ==========================================
-TOTAL PAYABLE HOURS: ${formatNum(results.totalAllocatedHours, 2)} hrs
-TOTAL PAY:           $${formatNum(results.totalWeekendPay, 2)}
-==========================================
-
-NOTICE & DISCLAIMER:
-Weekend and overtime rates vary by modern award, enterprise agreement, employee type and circumstances. Accruely calculates the rate structure you enter; it does not determine which award or rate applies. Verify the applicable industrial instrument before processing payroll.
-
+Notice: Weekend and overtime entitlements can vary by award, agreement and employment arrangement. Select the applicable rule and verify the result before processing payroll.
 ==========================================
 Accruely • Australian Payroll Tools
 ==========================================`;

@@ -77,24 +77,21 @@ const DEFAULT_STANDARD_OT_INPUTS: StandardOTAdjustmentInputs = {
 };
 
 const DEFAULT_WEEKEND_PAY_INPUTS: WeekendPayInputs = {
-  employeeName: 'John Smith',
-  employeeType: 'Full-time',
-  dayWorked: 'Saturday',
-  workType: 'Overtime',
-  rateTreatment: 'Use one applicable rate',
-  awardReference: '',
-  ordinaryHourlyRate: 30.0,
-  totalHoursWorked: 7.6,
-  tiers: [
-    { id: 't1', name: 'First 2.00 hours', capHours: 2.0, ratePercentage: 150 },
-    { id: 't2', name: 'Remaining hours', capHours: null, ratePercentage: 200 },
-  ],
-  applyMinimumPayment: false,
-  minimumHours: 3.0,
-  enableShiftTimes: false,
-  shiftStartTime: '08:00',
-  shiftEndTime: '16:06',
-  unpaidBreakMinutes: 30,
+  mode: 'single',
+  saturdayHours: '4.98',
+  sundayHours: '1.00',
+  totalTimesheetHours: '5.98',
+  totalHoursWorked: '5.98',
+  dayWorked: 'Weekend',
+  selectedRuleId: 'casual-loaded',
+  payRule: 'casual-loaded',
+  saturdayCap: '4.14',
+  sundayCap: '4.14',
+  casualShiftCap: '4.14',
+  splitMode: 'automatic',
+  ordinaryHourlyRate: 45.0,
+  enablePayCalculation: true,
+  payrollAmount: '',
 };
 
 const DEFAULT_SETTINGS: SettingsPreferences = {
@@ -105,7 +102,7 @@ const DEFAULT_SETTINGS: SettingsPreferences = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('pl-opening-balance');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('leave-accrual');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Leave Accrual Inputs
@@ -159,20 +156,25 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed && (typeof parsed.ordinaryHourlyRate === 'number' || typeof parsed.totalHoursWorked === 'number')) {
-          const loadedTiers =
-            parsed.tiers && parsed.tiers.length > 0
-              ? parsed.tiers
-              : parsed.splitTiers && parsed.splitTiers.length > 0
-              ? parsed.splitTiers
-              : DEFAULT_WEEKEND_PAY_INPUTS.tiers;
+        if (
+          parsed &&
+          (typeof parsed.ordinaryHourlyRate === 'number' ||
+            typeof parsed.totalTimesheetHours === 'number' ||
+            typeof parsed.totalHoursWorked === 'number')
+        ) {
+          const loadedCategories =
+            parsed.categories && parsed.categories.length > 0
+              ? parsed.categories
+              : DEFAULT_WEEKEND_PAY_INPUTS.categories;
 
           return {
             ...DEFAULT_WEEKEND_PAY_INPUTS,
             ...parsed,
+            totalTimesheetHours:
+              parsed.totalTimesheetHours ?? parsed.totalHoursWorked ?? 4.98,
             totalHoursWorked:
-              parsed.totalHoursWorked ?? parsed.splitTotalHours ?? parsed.hoursWorked ?? 7.6,
-            tiers: loadedTiers,
+              parsed.totalTimesheetHours ?? parsed.totalHoursWorked ?? 4.98,
+            categories: loadedCategories,
           };
         }
       } catch (e) {

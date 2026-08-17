@@ -140,6 +140,28 @@ export type RateTreatment =
   | 'Use the higher applicable rate'
   | 'Custom rule';
 
+export interface PayrollCategoryItem {
+  id: string;
+  name: string;
+  hours: number | string;
+  allocationType?: 'manual' | 'auto-remaining' | 'auto-cap';
+  capHours?: number | string | null;
+  multiplier?: number | string; // e.g. 1.0, 1.5, 2.0
+  ratePercentage?: number | string; // e.g. 100, 150, 200
+  effectiveRate?: number;
+  categoryPay?: number;
+}
+
+export interface DayTimesheetEntry {
+  id: string;
+  dayName: string;
+  hours: number | string;
+  isOrdinary?: boolean;
+  notes?: string;
+}
+
+export type WeekendCalculatorMode = 'single' | 'weekly';
+
 export interface SplitTierConfig {
   id: string;
   name?: string;
@@ -169,28 +191,83 @@ export interface SplitHoursResult {
   tierResults: SplitTierResult[];
 }
 
+export interface CategoryResultItem {
+  id: string;
+  name: string;
+  allocatedHours: number;
+  multiplier: number;
+  ratePercentage: number;
+  hourlyRate: number;
+  categoryPay: number;
+  formula: string;
+}
+
+export interface DayCategorySplitItem {
+  id: string;
+  name: string;
+  hours: number | string;
+  allocatedHours: number;
+  multiplier?: number;
+  ratePercentage?: number;
+  hourlyRate?: number;
+  pay?: number;
+}
+
+export interface WeekendDayConfig {
+  dayName: 'Saturday' | 'Sunday';
+  ruleMode?: 'capacity-38h' | 'custom-categories';
+  categories?: PayrollCategoryItem[];
+}
+
 export interface WeekendPayInputs {
-  employeeName: string;
-  employeeType: EmployeeType;
-  dayWorked: DayWorked;
-  workType: WorkType;
+  mode?: WeekendCalculatorMode;
+  
+  // Direct Saturday & Sunday Timesheet Inputs
+  saturdayHours?: number | string;
+  sundayHours?: number | string;
+  selectedRuleId?: string;
+  saturdayCap?: string;
+  sundayCap?: string;
+
+  totalTimesheetHours: number | string;
+  dayWorked?: DayWorked | string;
+  
+  // Weekly / Pay Period entries
+  weeklyDays?: DayTimesheetEntry[];
+  weeklyOrdinaryThreshold?: number | string;
+  useOrdinaryThreshold?: boolean;
+  
+  // Weekend Day-Specific Configurations
+  payRule?: 'casual' | 'weekly-38h' | 'daily-shift' | 'all-overtime' | 'custom' | string;
+  casualShiftCap?: string;
+  saturdayConfig?: WeekendDayConfig;
+  sundayConfig?: WeekendDayConfig;
+  
+  // Payroll Categories & Allocation
+  categories?: PayrollCategoryItem[];
+  splitMode?: 'manual' | 'automatic';
+  
+  // Optional Rate Calculation
+  enablePayCalculation?: boolean;
+  ordinaryHourlyRate?: number | string;
+  
+  // Optional comparison
+  payrollAmount?: number | null | string;
+
+  // Backward compatibility fields
+  totalHoursWorked?: number | string;
+  tiers?: SplitTierConfig[];
+  employeeName?: string;
+  employeeType?: EmployeeType;
+  workType?: WorkType;
   rateTreatment?: RateTreatment;
   awardReference?: string;
-  ordinaryHourlyRate: number;
-  totalHoursWorked: number;
-  tiers: SplitTierConfig[];
-  
-  // Minimum payment / engagement
-  applyMinimumPayment: boolean;
-  minimumHours: number;
-  
-  // Shift times (optional)
+  applyMinimumPayment?: boolean;
+  minimumHours?: number;
   enableShiftTimes?: boolean;
   shiftStartTime?: string;
   shiftEndTime?: string;
   unpaidBreakMinutes?: number;
-
-  // Legacy/backward-compatibility fields
   calculationType?: WeekendCalculationType;
   weekendRatePercentage?: number;
   hoursWorked?: number;
@@ -202,29 +279,70 @@ export interface WeekendPayInputs {
   splitTiers?: SplitTierConfig[];
 }
 
+export interface DaySplitResult {
+  dayName: string;
+  timesheetHours: number;
+  categorySplits?: DayCategorySplitItem[];
+  ordinaryHours: number;
+  overtimeHours: number;
+  totalAllocated: number;
+  difference?: number;
+  isReconciled: boolean;
+  ruleDescription?: string;
+}
+
 export interface WeekendPayResults {
-  dayWorked: DayWorked;
-  workType: WorkType;
-  rateTreatment: RateTreatment;
-  awardReference: string;
-  ordinaryHourlyRate: number;
-  totalHoursWorked: number;
-  payableHours: number;
-  isMinimumPaymentApplied: boolean;
-  minimumHours: number;
-  minimumShortfallHours: number;
-  tierResults: SplitTierResult[];
+  mode: WeekendCalculatorMode;
+  totalTimesheetHours: number;
   totalAllocatedHours: number;
   hoursDifference: number;
   isReconciled: boolean;
-  totalWeekendPay: number;
-  calculationSteps: string[];
+  reconciliationStatus: 'reconciled' | 'under-allocated' | 'over-allocated';
+  statusMessage: string;
+
+  // Categories & results
+  categoryResults: CategoryResultItem[];
+
+  // Weekly details (if applicable)
+  weeklyTotalHours?: number;
+  weekdayOrdinaryTotal?: number;
+  remainingOrdinaryCapacity?: number;
+  weekendTotalHours?: number;
+  weekendOrdinaryHours?: number;
+  weekendOvertimeHours?: number;
+  totalWeekOrdinaryHours?: number;
+  totalWeekOvertimeHours?: number;
   
-  // Shift time reconciliation
+  // Specific day breakdowns
+  saturdayBreakdown?: DaySplitResult;
+  sundayBreakdown?: DaySplitResult;
+  dailyBreakdowns?: DaySplitResult[];
+
+  // Optional pay calculation
+  hasPayCalculation: boolean;
+  ordinaryHourlyRate: number;
+  totalGrossPay: number;
+  
+  // Optional Payroll Check
+  payrollAmountEntered?: number | null;
+  payrollDifference?: number | null;
+  isPayrollMatched?: boolean | null;
+
+  // Backward compatibility fields
+  dayWorked?: DayWorked | string;
+  tierResults?: SplitTierResult[];
+  totalWeekendPay?: number;
+  calculationSteps?: string[];
+  totalHoursWorked?: number;
+  workType?: WorkType;
+  rateTreatment?: RateTreatment;
+  awardReference?: string;
+  payableHours?: number;
+  isMinimumPaymentApplied?: boolean;
+  minimumHours?: number;
+  minimumShortfallHours?: number;
   calculatedShiftDuration?: number | null;
   shiftDifference?: number | null;
-
-  // Legacy fields for backward compatibility
   calculationType?: WeekendCalculationType;
   isTieredOvertime?: boolean;
   multiplier?: number;

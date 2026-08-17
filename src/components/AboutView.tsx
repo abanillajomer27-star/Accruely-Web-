@@ -298,47 +298,43 @@ export const AboutView: React.FC = () => {
         {expandedCards.weekendPay && (
           <div className="mt-4 pt-1 space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed animate-fadeIn">
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-              Designed for Australian bookkeepers and payroll professionals when a timesheet contains weekend hours or overtime that must be distributed across different award penalty tiers. Automatically splits timesheet hours across configurable rate tiers, reconciles total hours, supports minimum engagement rules, and provides auditable calculation breakdowns.
+              A simple and practical tool for Australian bookkeepers and accountants to split weekend or overtime timesheet hours between penalty rates, calculate gross pay, and optionally cross-check against payroll software (Xero, MYOB, Deputy).
             </p>
 
             <ul className="list-disc pl-5 space-y-1 text-zinc-600 dark:text-zinc-400">
               <li>
-                <strong>Automatic Tier Splitting:</strong> Enter the total weekend hours (e.g. 7.60, 15.20, 10.50, 2.75 hrs). Accruely automatically splits the hours across configured rate tiers (e.g. First 2.00h @ 150%, remaining @ 200%) and computes subtotal pay.
+                <strong>Automatic Hour Splitting:</strong> Enter the total timesheet hours (e.g. 7.60 hrs) and the first rate cap (e.g. 2.00 hrs @ 150%). Accruely automatically calculates the remaining hours (5.60 hrs @ 200%).
               </li>
               <li>
-                <strong>Hours Reconciliation Engine:</strong> Validates that Total Allocated Hours match the Original Timesheet Hours down to the minute, flagging any variance or shortfall.
+                <strong>Direct Pay Calculation:</strong> Computes the exact pay for each rate tier using <code>Hourly Rate × Rate Multiplier × Hours</code> (e.g. $45.00 × 1.50 × 2.00 = $135.00, $45.00 × 2.00 × 5.60 = $504.00, Total = $639.00).
               </li>
               <li>
-                <strong>Configurable Rate Tiers:</strong> Add, remove, or customize any number of progressive threshold tiers and multipliers (125%, 150%, 175%, 200%, etc.).
+                <strong>Optional Payroll Check:</strong> Paste the gross pay calculated by your payroll system to verify against Accruely&apos;s mathematical result (showing MATCH or DIFFERENCE).
               </li>
               <li>
-                <strong>Minimum Engagement Rule:</strong> Optionally applies minimum shift engagement thresholds (e.g. 2h, 3h, 4h minimums) with automatic shortfall allocation.
-              </li>
-              <li>
-                <strong>Shift Time Calculator:</strong> Calculate net decimal hours from clock start/finish times and unpaid break minutes.
+                <strong>Flexible Tier Structure:</strong> Add intermediate penalty tiers as needed with the &ldquo;Add Rate&rdquo; control.
               </li>
             </ul>
 
             <div>
               <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-                • Tier Splitting & Reconciliation Formulas
+                • Calculation Formulas
               </h4>
               <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
                 <div>Tier Multiplier = Rate Percentage ÷ 100</div>
                 <div>Tier Hourly Rate = Ordinary Hourly Rate × Tier Multiplier</div>
-                <div>Allocated Tier Hours = MIN(Remaining Hours, Tier Hour Cap)</div>
-                <div>Tier Subtotal Pay = Allocated Tier Hours × Tier Hourly Rate</div>
-                <div>Total Allocated Hours = Sum of all Allocated Tier Hours</div>
-                <div>Hours Variance = Original Timesheet Hours − Total Allocated Hours</div>
+                <div>Tier Pay = Allocated Hours × Tier Hourly Rate</div>
+                <div>Remaining Hours = Total Hours − Sum of Capped Tiers</div>
                 <div className="text-orange-700 dark:text-orange-400 font-bold">
-                  Total Weekend Pay = Sum of all Tier Subtotals
+                  Total Weekend Pay = Sum of all Tier Pays
                 </div>
+                <div>Payroll Difference = Payroll Amount − Total Weekend Pay</div>
               </div>
             </div>
 
             <div className="pt-1">
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                <em>Disclaimer:</em> Weekend, overtime and penalty rates can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Enter the applicable rate structure for the employee and verify it before processing payroll.
+                <em>Notice:</em> Weekend and overtime rates can vary depending on the applicable Award, agreement and circumstances. Accruely calculates the rates entered by the user. Verify the applicable payroll rule before processing payroll.
               </p>
             </div>
           </div>
