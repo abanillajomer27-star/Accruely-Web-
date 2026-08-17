@@ -1,9 +1,10 @@
 import React from 'react';
-import { Menu, RotateCcw, ArrowLeft } from 'lucide-react';
+import { Menu, RotateCcw, ArrowLeft, Calculator } from 'lucide-react';
 import { ActiveTab } from '../types';
 
 interface HeaderProps {
   activeTab: ActiveTab;
+  isDrawerOpen?: boolean;
   onOpenMenu: () => void;
   onReset: () => void;
   onSelectTab: (tab: ActiveTab) => void;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
+  isDrawerOpen = false,
   onOpenMenu,
   onReset,
   onSelectTab,
@@ -44,25 +46,34 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-orange-600 dark:bg-zinc-900 text-white shadow-md sticky top-0 z-30 border-b border-orange-700 dark:border-zinc-800 transition-colors">
-      <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between min-h-[64px]">
+      <div className="max-w-xl mx-auto px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between min-h-[64px]">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {!isCalculatorTab ? (
             <button
               onClick={() => onSelectTab('standard-ot-adjustment')}
               aria-label="Back to calculator"
-              className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center cursor-pointer shrink-0"
+              className="p-2 hover:bg-white/15 active:bg-white/25 rounded-xl transition-all flex items-center justify-center cursor-pointer shrink-0 text-white"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           ) : (
             <button
               onClick={onOpenMenu}
-              aria-label="Open menu"
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer shrink-0"
+              aria-label={isDrawerOpen ? 'Close sidebar menu' : 'Open sidebar menu'}
+              aria-expanded={isDrawerOpen}
+              className="p-2 hover:bg-white/15 active:bg-white/25 rounded-xl transition-all flex items-center justify-center cursor-pointer shrink-0 text-white"
             >
-              <Menu className="w-7 h-7" />
+              <Menu className="w-5 h-5" />
             </button>
           )}
+
+          {/* Accruely App Logo / Icon */}
+          <div
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white shadow-xs"
+            title="Accruely"
+          >
+            <Calculator className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
+          </div>
 
           <div className="min-w-0">
             <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white leading-tight truncate">
@@ -85,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
         {isCalculatorTab && (
           <button
             onClick={onReset}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white text-xs sm:text-sm font-semibold rounded-full shadow-sm transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white text-xs sm:text-sm font-semibold rounded-full shadow-sm transition-all active:scale-95 cursor-pointer whitespace-nowrap ml-2 shrink-0"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>

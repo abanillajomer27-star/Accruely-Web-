@@ -1,7 +1,26 @@
-import React from 'react';
-import { User, Calculator, Scale, Clock, ShieldCheck, DollarSign } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Calculator, Scale, Clock, ShieldCheck, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const AboutView: React.FC = () => {
+  const [expandedCards, setExpandedCards] = useState<{
+    plOpeningBalance: boolean;
+    leaveAccrual: boolean;
+    standardOt: boolean;
+    weekendPay: boolean;
+  }>({
+    plOpeningBalance: false,
+    leaveAccrual: false,
+    standardOt: false,
+    weekendPay: false,
+  });
+
+  const toggleCard = (key: keyof typeof expandedCards) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   return (
     <div className="space-y-6 pb-12 animate-fadeIn max-w-3xl mx-auto">
       {/* Top Banner Card */}
@@ -64,183 +83,266 @@ export const AboutView: React.FC = () => {
         </div>
       </div>
 
-      {/* PL OPENING BALANCE CALCULATOR EXPLANATION */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
-        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <Scale className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
-            PL Opening Balance Calculator & Xero Checker
-          </h3>
+      {/* 1. PL OPENING BALANCE CALCULATOR EXPLANATION */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Scale className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
+                PL Opening Balance Calculator & Xero Checker
+              </h3>
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                Dual Entitlement & Xero Reconciler
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => toggleCard('plOpeningBalance')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 hover:bg-orange-100 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 rounded-xl transition-colors cursor-pointer shrink-0"
+            aria-expanded={expandedCards.plOpeningBalance}
+          >
+            <span>{expandedCards.plOpeningBalance ? 'Hide description' : 'Show description'}</span>
+            {expandedCards.plOpeningBalance ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
         </div>
 
-        <div className="space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Dual Entitlement Periods (Old Rate & New Rate)
-            </h4>
-            <p className="text-zinc-700 dark:text-zinc-300 pl-3">
-              Designed for bookkeeping reconciliations and payroll migrations where an employee&apos;s entitlement changed (e.g. from part-time to full-time). Calculates service periods independently.
+        {expandedCards.plOpeningBalance && (
+          <div className="mt-4 pt-1 space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed animate-fadeIn">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+              Designed for bookkeeping reconciliations and payroll migrations where an employee&apos;s entitlement changed (e.g. from part-time to full-time) across multiple service periods. Calculates cumulative NES personal leave entitlements, accounts for historical leave taken, and determines the updated opening balance for Xero payroll transitions.
             </p>
-          </div>
 
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Full Anniversary Logic
-            </h4>
-            <p className="text-zinc-700 dark:text-zinc-300 pl-3">
-              Completed Years strictly counts full anniversaries. Remaining Weeks represents only the fractional weeks elapsed after the last completed anniversary.
-            </p>
-          </div>
+            <div>
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+                • Dual Entitlement Periods (Old Rate & New Rate)
+              </h4>
+              <p className="text-zinc-700 dark:text-zinc-300 pl-3">
+                Designed for bookkeeping reconciliations and payroll migrations where an employee&apos;s entitlement changed (e.g. from part-time to full-time). Calculates service periods independently.
+              </p>
+            </div>
 
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Mathematical Formulas
-            </h4>
-            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
-              <div>Additional Year Hours = Completed Years × Annual Entitlement</div>
-              <div>Weekly Accrual Rate = Annual Entitlement ÷ 52</div>
-              <div>Remaining Weeks Hours = Remaining Weeks × Weekly Accrual Rate</div>
-              <div>Total Leave Earned = Additional Year Hours + Remaining Weeks Hours</div>
-              <div>Grand Total Leave Earned = Old Rate Total + New Rate Total</div>
-              <div>Target Balance = Grand Total Leave Earned − Total Leave Used</div>
-              <div className="text-orange-700 dark:text-orange-400 font-bold">
-                Xero Updated Balance = Current Opening in Xero + Target Balance − Current Xero Balance
+            <div>
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+                • Full Anniversary Logic
+              </h4>
+              <p className="text-zinc-700 dark:text-zinc-300 pl-3">
+                Completed Years strictly counts full anniversaries. Remaining Weeks represents only the fractional weeks elapsed after the last completed anniversary.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+                • Mathematical Formulas
+              </h4>
+              <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
+                <div>Additional Year Hours = Completed Years × Annual Entitlement</div>
+                <div>Weekly Accrual Rate = Annual Entitlement ÷ 52</div>
+                <div>Remaining Weeks Hours = Remaining Weeks × Weekly Accrual Rate</div>
+                <div>Total Leave Earned = Additional Year Hours + Remaining Weeks Hours</div>
+                <div>Grand Total Leave Earned = Old Rate Total + New Rate Total</div>
+                <div>Target Balance = Grand Total Leave Earned − Total Leave Used</div>
+                <div className="text-orange-700 dark:text-orange-400 font-bold">
+                  Xero Updated Balance = Current Opening in Xero + Target Balance − Current Xero Balance
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* LEAVE ACCRUAL CALCULATOR EXPLANATION */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
-        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <Calculator className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
-            Standard Leave Accrual Calculator
-          </h3>
-        </div>
-
-        <div className="space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          <p>
-            Calculates routine leave accruals during pay cycles based on:
-          </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-zinc-700 dark:text-zinc-300">
-            <li><strong>Total Accruable Hours:</strong> Ordinary Hours + Public Holiday Hours + Annual Leave Taken + Personal Leave Taken.</li>
-            <li><strong>Annual Leave (AL):</strong> 4 weeks per year standard (0.076923 hrs/hr worked).</li>
-            <li><strong>Personal / Carer&apos;s Leave (PL):</strong> 10 days per year standard (0.038462 hrs/hr worked).</li>
-            <li><strong>Closing Balances:</strong> Opening Balance + Accrued − Taken.</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* STANDARD OT ADJUSTMENT CALCULATOR EXPLANATION */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
-        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
-            Standard OT Adjustment Calculator
-          </h3>
-        </div>
-
-        <div className="space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          <p>
-            Designed for companies that prorate fixed regular overtime entitlements when an employee takes unpaid leave (Leave Without Pay / LWOP).
-          </p>
-
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Calculation Formulas
-            </h4>
-            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
-              <div>Standard Hours Per Day = Standard Ordinary Hours ÷ 5</div>
-              <div>LWOP Hours = LWOP Days × Standard Hours Per Day</div>
-              <div>Ordinary Hours Worked = Standard Ordinary Hours − LWOP Hours</div>
-              <div>Attendance Percentage = Ordinary Hours Worked ÷ Standard Ordinary Hours</div>
-              <div className="text-orange-700 dark:text-orange-400 font-bold">
-                Adjusted Standard OT = Standard OT × Attendance Percentage
-              </div>
+      {/* 2. LEAVE ACCRUAL CALCULATOR EXPLANATION */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Calculator className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
+                Standard Leave Accrual Calculator
+              </h3>
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                Pay Run & Period Accruals
+              </p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => toggleCard('leaveAccrual')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 hover:bg-orange-100 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 rounded-xl transition-colors cursor-pointer shrink-0"
+            aria-expanded={expandedCards.leaveAccrual}
+          >
+            <span>{expandedCards.leaveAccrual ? 'Hide description' : 'Show description'}</span>
+            {expandedCards.leaveAccrual ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        </div>
 
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Quick Employment Presets
-            </h4>
-            <ul className="list-disc pl-5 space-y-1 text-zinc-700 dark:text-zinc-300">
-              <li><strong>76-Hour Employee:</strong> 38 Standard Ordinary Hours, 2 Standard OT (7.6 hrs/day).</li>
-              <li><strong>88-Hour Employee:</strong> 44 Standard Ordinary Hours, 2 Standard OT (8.8 hrs/day).</li>
+        {expandedCards.leaveAccrual && (
+          <div className="mt-4 pt-1 space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed animate-fadeIn">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+              Calculates routine pay-run leave accruals based on Australian National Employment Standards (NES) or custom company policies. Computes progressive annual leave (4 weeks per year) and personal/carer&apos;s leave (10 days per year) accruals from total paid hours worked.
+            </p>
+            <p className="font-semibold text-zinc-800 dark:text-zinc-200">
+              Calculates routine leave accruals during pay cycles based on:
+            </p>
+            <ul className="list-disc pl-5 space-y-1.5 text-zinc-700 dark:text-zinc-300">
+              <li><strong>Total Accruable Hours:</strong> Ordinary Hours + Public Holiday Hours + Annual Leave Taken + Personal Leave Taken.</li>
+              <li><strong>Annual Leave (AL):</strong> 4 weeks per year standard (0.076923 hrs/hr worked).</li>
+              <li><strong>Personal / Carer&apos;s Leave (PL):</strong> 10 days per year standard (0.038462 hrs/hr worked).</li>
+              <li><strong>Closing Balances:</strong> Opening Balance + Accrued − Taken.</li>
             </ul>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* WEEKEND PAY CALCULATOR EXPLANATION */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
-        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
-            Weekend Pay Calculator
-          </h3>
+      {/* 3. STANDARD OT ADJUSTMENT CALCULATOR EXPLANATION */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
+                Standard OT Adjustment Calculator
+              </h3>
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                Prorated Standard OT for LWOP
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => toggleCard('standardOt')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 hover:bg-orange-100 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 rounded-xl transition-colors cursor-pointer shrink-0"
+            aria-expanded={expandedCards.standardOt}
+          >
+            <span>{expandedCards.standardOt ? 'Hide description' : 'Show description'}</span>
+            {expandedCards.standardOt ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
         </div>
 
-        <div className="space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          <p>
-            Calculates weekend ordinary penalties and tiered overtime shifts using ordinary hourly rates, configurable penalty percentages, and threshold splitting.
-          </p>
-
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Ordinary Weekend Calculation Logic
-            </h4>
-            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
-              <div>Multiplier = Weekend Percentage ÷ 100</div>
-              <div>Weekend Pay Rate = Ordinary Hourly Rate × Multiplier</div>
-              <div className="text-orange-700 dark:text-orange-400 font-bold">
-                Total Weekend Pay = Weekend Pay Rate × Hours Worked
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Tiered Overtime Calculation Logic
-            </h4>
-            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
-              <div>First Tier Hours = MIN(Total OT Hours, Threshold Hours)</div>
-              <div>Remaining Hours = MAX(Total OT Hours − Threshold Hours, 0)</div>
-              <div>First Tier Pay = Ordinary Rate × (First OT Rate ÷ 100) × First Tier Hours</div>
-              <div>Higher Tier Pay = Ordinary Rate × (Higher OT Rate ÷ 100) × Remaining Hours</div>
-              <div className="text-orange-700 dark:text-orange-400 font-bold">
-                Total Overtime Pay = First Tier Pay + Higher Tier Pay
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
-              • Split Hours (Automatic Tier Splitting) Logic
-            </h4>
-            <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
-              <div>Tier Multiplier = Tier Rate Percentage ÷ 100</div>
-              <div>Tier Hourly Rate = Ordinary Hourly Rate × Tier Multiplier</div>
-              <div>Tier Hours = Allocated portion of Total Timesheet Hours</div>
-              <div>Tier Pay = Tier Hours × Tier Hourly Rate</div>
-              <div>Total Split Hours = Sum of all Allocated Tier Hours</div>
-              <div className="text-orange-700 dark:text-orange-400 font-bold">
-                Total Split Pay = Sum of all Tier Pay
-              </div>
-              <div className="text-emerald-700 dark:text-emerald-400 font-bold">
-                Reconciliation: Original Timesheet Hours − Total Split Hours = 0.00 hrs
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              <em>Disclaimer:</em> Weekend, overtime and penalty rates can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Enter the applicable rate structure for the employee and verify it before processing payroll.
+        {expandedCards.standardOt && (
+          <div className="mt-4 pt-1 space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed animate-fadeIn">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+              Calculates prorated standard fixed overtime when an employee takes unpaid leave (Leave Without Pay / LWOP). Adjusts standard overtime entitlement based on attendance percentage during the pay period.
             </p>
+
+            <div>
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+                • Calculation Formulas
+              </h4>
+              <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
+                <div>Standard Hours Per Day = Standard Ordinary Hours ÷ 5</div>
+                <div>LWOP Hours = LWOP Days × Standard Hours Per Day</div>
+                <div>Ordinary Hours Worked = Standard Ordinary Hours − LWOP Hours</div>
+                <div>Attendance Percentage = Ordinary Hours Worked ÷ Standard Ordinary Hours</div>
+                <div className="text-orange-700 dark:text-orange-400 font-bold">
+                  Adjusted Standard OT = Standard OT × Attendance Percentage
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+                • Quick Employment Presets
+              </h4>
+              <ul className="list-disc pl-5 space-y-1 text-zinc-700 dark:text-zinc-300">
+                <li><strong>76-Hour Employee:</strong> 38 Standard Ordinary Hours, 2 Standard OT (7.6 hrs/day).</li>
+                <li><strong>88-Hour Employee:</strong> 44 Standard Ordinary Hours, 2 Standard OT (8.8 hrs/day).</li>
+              </ul>
+            </div>
           </div>
+        )}
+      </div>
+
+      {/* 4. WEEKEND PAY CALCULATOR EXPLANATION */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
+                Weekend Pay Calculator
+              </h3>
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                Penalty Rates & Shift Pay
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => toggleCard('weekendPay')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 hover:bg-orange-100 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 rounded-xl transition-colors cursor-pointer shrink-0"
+            aria-expanded={expandedCards.weekendPay}
+          >
+            <span>{expandedCards.weekendPay ? 'Hide description' : 'Show description'}</span>
+            {expandedCards.weekendPay ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
         </div>
+
+        {expandedCards.weekendPay && (
+          <div className="mt-4 pt-1 space-y-3.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed animate-fadeIn">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+              Designed for Australian bookkeepers and payroll professionals when a timesheet contains weekend hours or overtime that must be distributed across different award penalty tiers. Automatically splits timesheet hours across configurable rate tiers, reconciles total hours, supports minimum engagement rules, and provides auditable calculation breakdowns.
+            </p>
+
+            <ul className="list-disc pl-5 space-y-1 text-zinc-600 dark:text-zinc-400">
+              <li>
+                <strong>Automatic Tier Splitting:</strong> Enter the total weekend hours (e.g. 7.60, 15.20, 10.50, 2.75 hrs). Accruely automatically splits the hours across configured rate tiers (e.g. First 2.00h @ 150%, remaining @ 200%) and computes subtotal pay.
+              </li>
+              <li>
+                <strong>Hours Reconciliation Engine:</strong> Validates that Total Allocated Hours match the Original Timesheet Hours down to the minute, flagging any variance or shortfall.
+              </li>
+              <li>
+                <strong>Configurable Rate Tiers:</strong> Add, remove, or customize any number of progressive threshold tiers and multipliers (125%, 150%, 175%, 200%, etc.).
+              </li>
+              <li>
+                <strong>Minimum Engagement Rule:</strong> Optionally applies minimum shift engagement thresholds (e.g. 2h, 3h, 4h minimums) with automatic shortfall allocation.
+              </li>
+              <li>
+                <strong>Shift Time Calculator:</strong> Calculate net decimal hours from clock start/finish times and unpaid break minutes.
+              </li>
+            </ul>
+
+            <div>
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-base mb-1">
+                • Tier Splitting & Reconciliation Formulas
+              </h4>
+              <div className="pl-3 space-y-1 font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 p-3 rounded-xl mt-1 border border-zinc-200/60 dark:border-zinc-700/60">
+                <div>Tier Multiplier = Rate Percentage ÷ 100</div>
+                <div>Tier Hourly Rate = Ordinary Hourly Rate × Tier Multiplier</div>
+                <div>Allocated Tier Hours = MIN(Remaining Hours, Tier Hour Cap)</div>
+                <div>Tier Subtotal Pay = Allocated Tier Hours × Tier Hourly Rate</div>
+                <div>Total Allocated Hours = Sum of all Allocated Tier Hours</div>
+                <div>Hours Variance = Original Timesheet Hours − Total Allocated Hours</div>
+                <div className="text-orange-700 dark:text-orange-400 font-bold">
+                  Total Weekend Pay = Sum of all Tier Subtotals
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <em>Disclaimer:</em> Weekend, overtime and penalty rates can vary depending on the applicable modern award, enterprise agreement, employment arrangement, employee type and circumstances. Enter the applicable rate structure for the employee and verify it before processing payroll.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

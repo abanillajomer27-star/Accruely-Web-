@@ -80,20 +80,21 @@ const DEFAULT_WEEKEND_PAY_INPUTS: WeekendPayInputs = {
   employeeName: 'John Smith',
   employeeType: 'Full-time',
   dayWorked: 'Saturday',
-  workType: 'Ordinary Hours',
-  calculationType: 'Standard',
+  workType: 'Overtime',
+  rateTreatment: 'Use one applicable rate',
+  awardReference: '',
   ordinaryHourlyRate: 30.0,
-  weekendRatePercentage: 150,
-  hoursWorked: 6.0,
-  firstOtRatePercentage: 150,
-  higherOtRatePercentage: 200,
-  higherRateThresholdHours: 2.0,
-  totalOtHours: 4.0,
-  splitTotalHours: 7.0,
-  splitTiers: [
-    { id: 'tier-1', capHours: 2.0, ratePercentage: 150 },
-    { id: 'tier-2', capHours: null, ratePercentage: 200 },
+  totalHoursWorked: 7.6,
+  tiers: [
+    { id: 't1', name: 'First 2.00 hours', capHours: 2.0, ratePercentage: 150 },
+    { id: 't2', name: 'Remaining hours', capHours: null, ratePercentage: 200 },
   ],
+  applyMinimumPayment: false,
+  minimumHours: 3.0,
+  enableShiftTimes: false,
+  shiftStartTime: '08:00',
+  shiftEndTime: '16:06',
+  unpaidBreakMinutes: 30,
 };
 
 const DEFAULT_SETTINGS: SettingsPreferences = {
@@ -158,8 +159,21 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed.ordinaryHourlyRate === 'number') {
-          return { ...DEFAULT_WEEKEND_PAY_INPUTS, ...parsed };
+        if (parsed && (typeof parsed.ordinaryHourlyRate === 'number' || typeof parsed.totalHoursWorked === 'number')) {
+          const loadedTiers =
+            parsed.tiers && parsed.tiers.length > 0
+              ? parsed.tiers
+              : parsed.splitTiers && parsed.splitTiers.length > 0
+              ? parsed.splitTiers
+              : DEFAULT_WEEKEND_PAY_INPUTS.tiers;
+
+          return {
+            ...DEFAULT_WEEKEND_PAY_INPUTS,
+            ...parsed,
+            totalHoursWorked:
+              parsed.totalHoursWorked ?? parsed.splitTotalHours ?? parsed.hoursWorked ?? 7.6,
+            tiers: loadedTiers,
+          };
         }
       } catch (e) {
         // fallback
@@ -312,7 +326,8 @@ export default function App() {
     <div className="min-h-screen bg-white dark:bg-[#121212] text-zinc-900 dark:text-zinc-100 font-sans flex flex-col antialiased transition-colors duration-200">
       <Header
         activeTab={activeTab}
-        onOpenMenu={() => setIsDrawerOpen(true)}
+        isDrawerOpen={isDrawerOpen}
+        onOpenMenu={() => setIsDrawerOpen((prev) => !prev)}
         onReset={handleResetActiveCalculator}
         onSelectTab={(tab) => setActiveTab(tab)}
       />

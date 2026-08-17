@@ -127,13 +127,22 @@ export interface StandardOTAdjustmentResults {
 }
 
 // --- WEEKEND PAY CALCULATOR TYPES ---
-export type EmployeeType = 'Full-time' | 'Part-time' | 'Casual';
+export type EmployeeType = 'Full-time' | 'Part-time' | 'Casual' | 'Other / Custom';
 export type DayWorked = 'Saturday' | 'Sunday';
-export type WorkType = 'Ordinary Hours' | 'Overtime';
+export type WorkType =
+  | 'Ordinary Weekend Hours'
+  | 'Overtime'
+  | 'Custom / Split Rate'
+  | 'Ordinary Hours';
 export type WeekendCalculationType = 'Standard' | 'Split Hours';
+export type RateTreatment =
+  | 'Use one applicable rate'
+  | 'Use the higher applicable rate'
+  | 'Custom rule';
 
 export interface SplitTierConfig {
   id: string;
+  name?: string;
   capHours: number | null; // null represents "Remaining hours"
   ratePercentage: number;
 }
@@ -165,47 +174,77 @@ export interface WeekendPayInputs {
   employeeType: EmployeeType;
   dayWorked: DayWorked;
   workType: WorkType;
-  calculationType: WeekendCalculationType;
+  rateTreatment?: RateTreatment;
+  awardReference?: string;
   ordinaryHourlyRate: number;
-  // Standard mode - Ordinary weekend parameters
-  weekendRatePercentage: number;
-  hoursWorked: number;
-  // Standard mode - Tiered overtime parameters
-  firstOtRatePercentage: number;
-  higherOtRatePercentage: number;
-  higherRateThresholdHours: number;
-  totalOtHours: number;
-  // Split Hours mode parameters
-  splitTotalHours: number;
-  splitTiers: SplitTierConfig[];
+  totalHoursWorked: number;
+  tiers: SplitTierConfig[];
+  
+  // Minimum payment / engagement
+  applyMinimumPayment: boolean;
+  minimumHours: number;
+  
+  // Shift times (optional)
+  enableShiftTimes?: boolean;
+  shiftStartTime?: string;
+  shiftEndTime?: string;
+  unpaidBreakMinutes?: number;
+
+  // Legacy/backward-compatibility fields
+  calculationType?: WeekendCalculationType;
+  weekendRatePercentage?: number;
+  hoursWorked?: number;
+  firstOtRatePercentage?: number;
+  higherOtRatePercentage?: number;
+  higherRateThresholdHours?: number;
+  totalOtHours?: number;
+  splitTotalHours?: number;
+  splitTiers?: SplitTierConfig[];
 }
 
 export interface WeekendPayResults {
-  calculationType: WeekendCalculationType;
-  isTieredOvertime: boolean;
-  // Standard Mode - Ordinary Results
-  multiplier: number;
-  weekendPayRate: number;
-  hoursWorked: number;
-  breakdownEquation: string;
-  // Standard Mode - Tiered Overtime Results
-  firstOtRatePercentage: number;
-  firstOtMultiplier: number;
-  firstTierHourlyRate: number;
-  firstTierHours: number;
-  firstTierPay: number;
-  higherOtRatePercentage: number;
-  higherOtMultiplier: number;
-  higherTierHourlyRate: number;
-  higherRateThresholdHours: number;
-  remainingHours: number;
-  higherTierPay: number;
-  totalOvertimeHours: number;
-  totalOvertimePay: number;
-  // Split Hours Mode Results
-  splitHoursResult: SplitHoursResult;
-  // Overall Final Result
+  dayWorked: DayWorked;
+  workType: WorkType;
+  rateTreatment: RateTreatment;
+  awardReference: string;
+  ordinaryHourlyRate: number;
+  totalHoursWorked: number;
+  payableHours: number;
+  isMinimumPaymentApplied: boolean;
+  minimumHours: number;
+  minimumShortfallHours: number;
+  tierResults: SplitTierResult[];
+  totalAllocatedHours: number;
+  hoursDifference: number;
+  isReconciled: boolean;
   totalWeekendPay: number;
+  calculationSteps: string[];
+  
+  // Shift time reconciliation
+  calculatedShiftDuration?: number | null;
+  shiftDifference?: number | null;
+
+  // Legacy fields for backward compatibility
+  calculationType?: WeekendCalculationType;
+  isTieredOvertime?: boolean;
+  multiplier?: number;
+  weekendPayRate?: number;
+  hoursWorked?: number;
+  breakdownEquation?: string;
+  firstOtRatePercentage?: number;
+  firstOtMultiplier?: number;
+  firstTierHourlyRate?: number;
+  firstTierHours?: number;
+  firstTierPay?: number;
+  higherOtRatePercentage?: number;
+  higherOtMultiplier?: number;
+  higherTierHourlyRate?: number;
+  higherRateThresholdHours?: number;
+  remainingHours?: number;
+  higherTierPay?: number;
+  totalOvertimeHours?: number;
+  totalOvertimePay?: number;
+  splitHoursResult?: SplitHoursResult;
 }
 
 export type ActiveTab =
