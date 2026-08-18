@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Calculator, Scale, Clock, ShieldCheck, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { AccruelyLogo } from './AccruelyLogo';
 
 export const AboutView: React.FC = () => {
   const [expandedCards, setExpandedCards] = useState<{
@@ -24,8 +25,11 @@ export const AboutView: React.FC = () => {
   return (
     <div className="space-y-6 pb-12 animate-fadeIn max-w-3xl mx-auto">
       {/* Top Banner Card */}
-      <div className="bg-orange-600 dark:bg-zinc-800 text-white rounded-2xl p-6 shadow-md text-center transition-colors">
-        <h2 className="text-3xl font-extrabold tracking-tight mb-1.5">Accruely</h2>
+      <div className="bg-orange-600 dark:bg-zinc-800 text-white rounded-2xl p-6 shadow-md text-center flex flex-col items-center justify-center transition-colors">
+        <div className="w-14 h-14 rounded-2xl bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center p-2.5 shadow-sm mb-3">
+          <AccruelyLogo className="w-full h-full text-white" />
+        </div>
+        <h2 className="text-3xl font-extrabold tracking-tight mb-1">Accruely</h2>
         <p className="text-orange-100 dark:text-zinc-300 text-base font-semibold">
           Australian Payroll Tools
         </p>

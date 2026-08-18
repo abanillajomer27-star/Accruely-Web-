@@ -214,15 +214,36 @@ export interface DayCategorySplitItem {
 }
 
 export interface WeekendDayConfig {
-  dayName: 'Saturday' | 'Sunday';
+  dayName: 'Saturday' | 'Sunday' | string;
   ruleMode?: 'capacity-38h' | 'custom-categories';
   categories?: PayrollCategoryItem[];
 }
 
 export interface WeekendPayInputs {
   mode?: WeekendCalculatorMode;
+  payPeriod?: 'fortnightly' | 'weekly';
+  employmentTypeFilter?: string;
+  showWeekdayInputs?: boolean;
   
-  // Direct Saturday & Sunday Timesheet Inputs
+  // Week 1 Fortnightly Entries
+  w1Monday?: number | string;
+  w1Tuesday?: number | string;
+  w1Wednesday?: number | string;
+  w1Thursday?: number | string;
+  w1Friday?: number | string;
+  w1Saturday?: number | string;
+  w1Sunday?: number | string;
+
+  // Week 2 Fortnightly Entries
+  w2Monday?: number | string;
+  w2Tuesday?: number | string;
+  w2Wednesday?: number | string;
+  w2Thursday?: number | string;
+  w2Friday?: number | string;
+  w2Saturday?: number | string;
+  w2Sunday?: number | string;
+
+  // Direct Saturday & Sunday Timesheet Inputs (aliases for single/quick entry)
   saturdayHours?: number | string;
   sundayHours?: number | string;
   selectedRuleId?: string;
@@ -237,11 +258,15 @@ export interface WeekendPayInputs {
   weeklyOrdinaryThreshold?: number | string;
   useOrdinaryThreshold?: boolean;
   
-  // Weekend Day-Specific Configurations
+  // Weekend Day-Specific Configurations & Overrides
   payRule?: 'casual' | 'weekly-38h' | 'daily-shift' | 'all-overtime' | 'custom' | string;
   casualShiftCap?: string;
   saturdayConfig?: WeekendDayConfig;
   sundayConfig?: WeekendDayConfig;
+  w1SaturdayConfig?: WeekendDayConfig;
+  w1SundayConfig?: WeekendDayConfig;
+  w2SaturdayConfig?: WeekendDayConfig;
+  w2SundayConfig?: WeekendDayConfig;
   
   // Payroll Categories & Allocation
   categories?: PayrollCategoryItem[];
@@ -279,8 +304,25 @@ export interface WeekendPayInputs {
   splitTiers?: SplitTierConfig[];
 }
 
+export interface DayCalculationBasis {
+  payrollPeriod: string;
+  week: string;
+  day: string;
+  employmentType: string;
+  selectedRule: string;
+  originalHours: number;
+  threshold?: number | null;
+  allocationText: string;
+  variance: number;
+  isReconciled: boolean;
+}
+
 export interface DaySplitResult {
+  dayKey?: string;
+  weekNumber?: 1 | 2;
+  weekLabel?: string;
   dayName: string;
+  fullLabel?: string;
   timesheetHours: number;
   categorySplits?: DayCategorySplitItem[];
   ordinaryHours: number;
@@ -289,6 +331,7 @@ export interface DaySplitResult {
   difference?: number;
   isReconciled: boolean;
   ruleDescription?: string;
+  calculationBasis?: DayCalculationBasis;
 }
 
 export interface WeekendPayResults {
@@ -299,6 +342,20 @@ export interface WeekendPayResults {
   isReconciled: boolean;
   reconciliationStatus: 'reconciled' | 'under-allocated' | 'over-allocated';
   statusMessage: string;
+
+  // Fortnight reconciliation summaries
+  totalFortnightTimesheetHours?: number;
+  totalFortnightAllocatedHours?: number;
+  fortnightHoursDifference?: number;
+  isFortnightReconciled?: boolean;
+  activeDayBreakdowns?: DaySplitResult[];
+  missingInformationNotice?: string;
+
+  // Specific day breakdowns (Fortnightly)
+  w1SaturdayBreakdown?: DaySplitResult;
+  w1SundayBreakdown?: DaySplitResult;
+  w2SaturdayBreakdown?: DaySplitResult;
+  w2SundayBreakdown?: DaySplitResult;
 
   // Categories & results
   categoryResults: CategoryResultItem[];

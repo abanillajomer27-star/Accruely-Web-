@@ -40,9 +40,23 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
   const handleResetDefaults = () => {
     onChangeInput(() => ({
       mode: 'single',
+      w1Monday: '',
+      w1Tuesday: '',
+      w1Wednesday: '',
+      w1Thursday: '',
+      w1Friday: '',
+      w1Saturday: '4.98',
+      w1Sunday: '1.00',
+      w2Monday: '',
+      w2Tuesday: '',
+      w2Wednesday: '',
+      w2Thursday: '',
+      w2Friday: '',
+      w2Saturday: '4.92',
+      w2Sunday: '1.00',
       saturdayHours: '4.98',
       sundayHours: '1.00',
-      totalTimesheetHours: '5.98',
+      totalTimesheetHours: '11.90',
       selectedRuleId: 'casual-loaded',
       payRule: 'casual-loaded',
       saturdayCap: '4.14',
@@ -50,6 +64,10 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
       casualShiftCap: '4.14',
       saturdayConfig: undefined,
       sundayConfig: undefined,
+      w1SaturdayConfig: undefined,
+      w1SundayConfig: undefined,
+      w2SaturdayConfig: undefined,
+      w2SundayConfig: undefined,
     }));
   };
 

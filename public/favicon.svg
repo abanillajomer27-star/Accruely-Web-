@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="accruely-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EA580C" />
+      <stop offset="50%" stop-color="#F97316" />
+      <stop offset="100%" stop-color="#C2410C" />
+    </linearGradient>
+    <linearGradient id="accruely-accent" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#FED7AA" stop-opacity="0.95" />
+    </linearGradient>
+    <linearGradient id="accruely-bar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFEDD5" />
+    </linearGradient>
+    <filter id="subtle-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#7C2D12" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Rounded App Squircle Background -->
+  <rect width="512" height="512" rx="112" fill="url(#accruely-grad)" />
+
+  <!-- Inner subtle border glow -->
+  <rect x="8" y="8" width="496" height="496" rx="104" fill="none" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="4" />
+
+  <!-- Iconic Geometric "A" + Accounting Balance / Calculation Symbol -->
+  <g filter="url(#subtle-shadow)">
+    <!-- Left Ascender / Pillar of Accrual -->
+    <path
+      d="M 172 396 L 232 128 C 236 112 245 104 256 104 C 267 104 276 112 280 128 L 340 396 C 344 412 334 424 316 424 L 286 424 C 274 424 266 416 263 404 L 256 368 L 220 368 L 213 404 C 210 416 202 424 190 424 L 160 424 C 142 424 132 412 136 396 Z"
+      fill="none"
+    />
+
+    <!-- Main Stylized Monogram "A" with Precision Math Geometry -->
+    <!-- Left Leg -->
+    <path
+      d="M 152 408 L 228 126 C 235 102 247 90 268 90 C 289 90 301 102 308 126 L 384 408 C 388 424 374 436 354 436 L 314 436 C 298 436 288 426 284 410 L 273 362 L 203 362 L 192 410 C 188 426 178 436 162 436 L 122 436 C 102 436 88 424 92 408 Z"
+      fill="none"
+    />
+
+    <!-- Pure Crisp Shape Layer: Modern Geometric A with Integrated Ledger Balance -->
+    <!-- Apex and Legs -->
+    <path
+      d="M 256 96 C 246 96 238 102 232 118 L 138 392 C 132 408 142 420 160 420 L 194 420 C 208 420 216 412 219 400 L 230 352 L 282 352 L 293 400 C 296 412 304 420 318 420 L 352 420 C 370 420 380 408 374 392 L 280 118 C 274 102 266 96 256 96 Z M 256 204 L 272 292 L 240 292 Z"
+      fill="url(#accruely-accent)"
+    />
+
+    <!-- Accounting Balance Precision Crossbar / Tally Matrix -->
+    <rect x="180" y="278" width="152" height="28" rx="8" fill="url(#accruely-bar)" />
+    
+    <!-- Balance Check / Accrual Dot Accent (Symbolizes reconciliation accuracy) -->
+    <circle cx="256" cy="168" r="14" fill="#EA580C" />
+
+    <!-- Plus / Delta Mini Precision Indicator on Ledger Bar -->
+    <rect x="251" y="284" width="10" height="16" rx="2" fill="#EA580C" />
+    <rect x="248" y="287" width="16" height="10" rx="2" fill="#EA580C" />
+  </g>
+</svg>

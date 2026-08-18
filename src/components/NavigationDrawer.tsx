@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calculator, Scale, Clock, DollarSign, Settings, Info, ShieldCheck, X } from 'lucide-react';
 import { ActiveTab } from '../types';
+import { AccruelyLogo } from './AccruelyLogo';
 
 interface NavigationDrawerProps {
   isOpen: boolean;
@@ -37,12 +38,19 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             <X className="w-6 h-6" />
           </button>
 
-          <h2 className="text-3xl font-bold tracking-tight text-white mb-1">
-            Accruely
-          </h2>
-          <p className="text-sm font-medium text-orange-100 dark:text-zinc-300">
-            Australian Payroll Tools
-          </p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-2xl bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center p-1.5 shadow-sm shrink-0">
+              <AccruelyLogo className="w-full h-full text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-white leading-none">
+                Accruely
+              </h2>
+              <p className="text-xs font-medium text-orange-100 dark:text-zinc-300 mt-1">
+                Australian Payroll Tools
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Navigation Items */}

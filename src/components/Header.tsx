@@ -1,6 +1,7 @@
 import React from 'react';
-import { Menu, RotateCcw, ArrowLeft, Calculator } from 'lucide-react';
+import { Menu, RotateCcw, ArrowLeft } from 'lucide-react';
 import { ActiveTab } from '../types';
+import { AccruelyLogo } from './AccruelyLogo';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -69,10 +70,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Accruely App Logo / Icon */}
           <div
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white shadow-xs"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white shadow-xs p-1"
             title="Accruely"
           >
-            <Calculator className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
+            <AccruelyLogo className="w-full h-full text-white" />
           </div>
 
           <div className="min-w-0">
