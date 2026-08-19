@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Pencil,
   Share2,
@@ -9,9 +9,8 @@ import {
   HelpCircle,
   Sparkles,
   RefreshCw,
+  RotateCcw,
   Info,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import {
   PLCalculatorInputs,
@@ -23,7 +22,7 @@ import {
   formatDateDisplay,
 } from '../utils/calculator';
 import { EditFieldModal } from './EditFieldModal';
-import { ExportModal } from './ExportModal';
+import { PLOpeningBalanceExportModal } from './PLOpeningBalanceExportModal';
 
 interface PLOpeningBalanceCalculatorViewProps {
   inputs: PLCalculatorInputs;
@@ -53,7 +52,39 @@ export const PLOpeningBalanceCalculatorView: React.FC<PLOpeningBalanceCalculator
   });
 
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [isCalculationsOpen, setIsCalculationsOpen] = useState(true);
+
+  useEffect(() => {
+    const handleExportEvent = () => setIsExportOpen(true);
+    window.addEventListener('accruely:open-export', handleExportEvent);
+    return () => window.removeEventListener('accruely:open-export', handleExportEvent);
+  }, []);
+
+  const handleReset = () => {
+    onChangeInput(() => ({
+      employeeName: 'John Smith',
+      standardHoursPerDay: 7.6,
+      oldPeriod: {
+        commencementDate: '',
+        calculationDate: '',
+        annualEntitlement: 76.0,
+        completedYears: 0,
+        remainingWeeks: 0,
+      },
+      newPeriod: {
+        commencementDate: '',
+        calculationDate: '',
+        annualEntitlement: 76.0,
+        completedYears: 0,
+        remainingWeeks: 0,
+      },
+      leaveUsedPreMYOB: 0,
+      leaveUsedMYOB: 0,
+      leaveUsedXero: 0,
+      leaveUsedOther: 0,
+      currentOpeningBalanceXero: 0,
+      currentXeroBalance: 0,
+    }));
+  };
 
   const openEditModal = (
     title: string,
@@ -196,21 +227,17 @@ export const PLOpeningBalanceCalculatorView: React.FC<PLOpeningBalanceCalculator
 
   return (
     <div className="space-y-6 pb-12 animate-fadeIn">
-      {/* CALCULATOR TITLE CARD */}
-      <div className="bg-white dark:bg-zinc-900 border border-orange-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-orange-100 dark:bg-zinc-800 text-orange-600 dark:text-orange-400 rounded-xl">
-            <Calculator className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              PL Opening Balance Calculator & Xero Checker
-            </h2>
-            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-              Multi-Period Personal Leave Reconciliation
-            </span>
-          </div>
-        </div>
+      {/* TOP ACTIONS / RESET */}
+      <div className="flex justify-end items-center">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-2xs transition-all cursor-pointer shrink-0 hover:text-zinc-900 dark:hover:text-white"
+          title="Reset PL Opening Balance Calculator"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Reset</span>
+        </button>
       </div>
 
       {/* 1. EMPLOYEE & SERVICE PARAMETERS */}
@@ -1017,136 +1044,10 @@ export const PLOpeningBalanceCalculatorView: React.FC<PLOpeningBalanceCalculator
         </div>
       </div>
 
-      {/* 6. CALCULATIONS (HOW IT WORKS) */}
-      <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
-        {/* Banner Header with Collapsible Toggle */}
-        <button
-          onClick={() => setIsCalculationsOpen((prev) => !prev)}
-          className="w-full bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between text-left cursor-pointer hover:bg-orange-700 dark:hover:bg-orange-800 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-orange-200" />
-            <span>6. CALCULATIONS (HOW IT WORKS)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
-              Fair Work & NES Formula Logic
-            </span>
-            {isCalculationsOpen ? (
-              <ChevronUp className="w-5 h-5 text-orange-200" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-orange-200" />
-            )}
-          </div>
-        </button>
-
-        {isCalculationsOpen && (
-          <div className="p-4 sm:p-5 space-y-4 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200">
-            {/* Step 1 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                1. Completed Years of Service
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Counts only full completed anniversaries between Commencement Date and Calculation Date. If dates are provided, this is auto-calculated. If either date is blank or you wish to override, you can manually tap and edit this field.
-              </p>
-              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
-                Completed Years = Full completed anniversaries only
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                2. Additional Year Hours
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Calculates the total entitlement for all completed full anniversary years.
-              </p>
-              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
-                Additional Year Hours = Completed Years × Annual Entitlement (e.g. 13 × 76 = 988 hrs)
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                3. Weekly Accrual Rate
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Converts annual personal leave entitlement into a weekly accrual rate.
-              </p>
-              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
-                Weekly Accrual Rate = Annual Entitlement ÷ 52 (e.g. 76 ÷ 52 = 1.461538... hrs/wk)
-              </div>
-            </div>
-
-            {/* Step 4 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                4. Remaining Weeks
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Calculates the pro-rata weeks since the last anniversary date. Auto-calculated when dates are provided, and fully editable for manual override.
-              </p>
-              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
-                Remaining Weeks = Days since last anniversary ÷ 7
-              </div>
-            </div>
-
-            {/* Step 5 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                5. Remaining Weeks Hours
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Calculates the leave accrued during the partial year after the last anniversary.
-              </p>
-              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
-                Remaining Weeks Hours = Remaining Weeks × Weekly Accrual Rate
-              </div>
-            </div>
-
-            {/* Step 6 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                6. Total Leave Earned (Per Period)
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Sum of anniversary year hours and remaining weeks hours for that rate period.
-              </p>
-              <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1.5 rounded font-mono text-xs text-orange-900 dark:text-orange-300">
-                Total Leave Earned = Additional Year Hours + Remaining Weeks Hours
-              </div>
-            </div>
-
-            {/* Step 7 */}
-            <div className="p-3.5 bg-white/80 dark:bg-zinc-800/70 rounded-xl border border-orange-200/60 dark:border-zinc-700 space-y-1">
-              <h4 className="font-bold text-orange-950 dark:text-orange-400">
-                7. Grand Total Leave Earned & Target Balance
-              </h4>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                Combines both entitlement periods and subtracts all historical personal leave taken.
-              </p>
-              <div className="space-y-1 font-mono text-xs text-orange-900 dark:text-orange-300">
-                <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1 rounded">
-                  Grand Total Leave Earned = Old Rate Total + New Rate Total
-                </div>
-                <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1 rounded">
-                  Target Balance = Grand Total Leave Earned − Total Personal Leave Used
-                </div>
-                <div className="bg-orange-50/70 dark:bg-zinc-900/90 px-3 py-1 rounded">
-                  Updated Balance (Xero) = Current Opening in Xero + Target Balance − Current Xero Balance
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Share / Export Action Button */}
       <div className="flex justify-center pt-2">
         <button
+          type="button"
           onClick={() => setIsExportOpen(true)}
           className="flex items-center gap-2.5 px-6 py-3.5 bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700 text-white font-bold text-base rounded-2xl shadow-md transition-all active:scale-98 cursor-pointer"
         >
@@ -1166,7 +1067,7 @@ export const PLOpeningBalanceCalculatorView: React.FC<PLOpeningBalanceCalculator
       />
 
       {/* Export Statement Modal */}
-      <ExportModal
+      <PLOpeningBalanceExportModal
         isOpen={isExportOpen}
         inputs={inputs}
         results={results}

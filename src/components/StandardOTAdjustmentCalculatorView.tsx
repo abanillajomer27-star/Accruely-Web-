@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Pencil,
   Share2,
@@ -9,6 +9,7 @@ import {
   ChevronUp,
   CheckCircle2,
   Calendar,
+  RotateCcw,
 } from 'lucide-react';
 import {
   StandardOTAdjustmentInputs,
@@ -19,7 +20,7 @@ import {
   generateStandardOTAdjustmentStatementText,
 } from '../utils/calculator';
 import { EditFieldModal } from './EditFieldModal';
-import { ExportModal } from './ExportModal';
+import { StandardOTAdjustmentExportModal } from './StandardOTAdjustmentExportModal';
 
 interface StandardOTAdjustmentCalculatorViewProps {
   inputs: StandardOTAdjustmentInputs;
@@ -50,6 +51,21 @@ export const StandardOTAdjustmentCalculatorView: React.FC<
 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(true);
+
+  useEffect(() => {
+    const handleExportEvent = () => setIsExportOpen(true);
+    window.addEventListener('accruely:open-export', handleExportEvent);
+    return () => window.removeEventListener('accruely:open-export', handleExportEvent);
+  }, []);
+
+  const handleReset = () => {
+    onChangeInput(() => ({
+      employeeName: 'John Smith',
+      standardOrdinaryHours: 38,
+      standardOT: 2,
+      lwopDays: 0,
+    }));
+  };
 
   const openEditModal = (
     title: string,
@@ -109,21 +125,17 @@ export const StandardOTAdjustmentCalculatorView: React.FC<
 
   return (
     <div className="space-y-4 pb-12 animate-fadeIn">
-      {/* CALCULATOR TITLE CARD */}
-      <div className="bg-white dark:bg-zinc-900 border border-orange-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-orange-100 dark:bg-zinc-800 text-orange-600 dark:text-orange-400 rounded-xl">
-            <Calculator className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              Standard OT Adjustment Calculator
-            </h2>
-            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-              Prorated Standard Overtime with LWOP
-            </span>
-          </div>
-        </div>
+      {/* TOP ACTIONS / RESET */}
+      <div className="flex justify-end items-center">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-2xs transition-all cursor-pointer shrink-0 hover:text-zinc-900 dark:hover:text-white"
+          title="Reset Standard OT Adjustment Calculator"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Reset</span>
+        </button>
       </div>
 
       {/* 1. QUICK PRESETS */}
@@ -453,21 +465,7 @@ export const StandardOTAdjustmentCalculatorView: React.FC<
         )}
       </div>
 
-      {/* 5. POLICY & USAGE GUIDELINES */}
-      <div className="bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 text-xs text-zinc-600 dark:text-zinc-400 space-y-2">
-        <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-200 font-bold text-xs">
-          <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />
-          <span>About Standard OT Adjustment</span>
-        </div>
-        <p className="leading-relaxed">
-          This calculator is designed for organizations that apply a company policy to prorate regular fixed standard overtime when an employee takes unpaid leave (Leave Without Pay / LWOP).
-        </p>
-        <p className="leading-relaxed">
-          Standard ordinary hours are divided by 5 to establish standard daily hours, deducting LWOP hours proportionally to derive the employee&apos;s effective attendance rate.
-        </p>
-      </div>
-
-      {/* 6. EXPORT / SHARE ACTION */}
+      {/* 5. EXPORT / SHARE ACTION */}
       <div className="flex justify-center pt-2">
         <button
           type="button"
@@ -490,10 +488,10 @@ export const StandardOTAdjustmentCalculatorView: React.FC<
       />
 
       {/* EXPORT MODAL */}
-      <ExportModal
+      <StandardOTAdjustmentExportModal
         isOpen={isExportOpen}
-        title="Standard OT Adjustment Statement"
-        statementText={statementText}
+        inputs={inputs}
+        results={results}
         onClose={() => setIsExportOpen(false)}
       />
     </div>

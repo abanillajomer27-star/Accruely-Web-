@@ -1,13 +1,25 @@
 import React from 'react';
-import { Calculator, Scale, Clock, DollarSign, Settings, Info, ShieldCheck, X } from 'lucide-react';
+import {
+  Calculator,
+  Scale,
+  Clock,
+  DollarSign,
+  Settings,
+  Info,
+  ShieldCheck,
+  X,
+  History,
+} from 'lucide-react';
 import { ActiveTab } from '../types';
 import { AccruelyLogo } from './AccruelyLogo';
+import { getDisplayShortcut } from '../utils/shortcuts';
 
 interface NavigationDrawerProps {
   isOpen: boolean;
   activeTab: ActiveTab;
   onClose: () => void;
   onSelectTab: (tab: ActiveTab) => void;
+  onOpenHistory?: () => void;
 }
 
 export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
@@ -15,6 +27,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   activeTab,
   onClose,
   onSelectTab,
+  onOpenHistory,
 }) => {
   if (!isOpen) return null;
 
@@ -59,7 +72,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             Calculators
           </div>
 
-          {/* Leave Accrual Calculator */}
+          {/* Leave Accrual */}
           <button
             onClick={() => {
               onSelectTab('leave-accrual');
@@ -76,10 +89,10 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 activeTab === 'leave-accrual' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
               }`}
             />
-            <span className="text-sm font-bold">Leave Accrual Calculator</span>
+            <span className="text-sm font-bold">Leave Accrual</span>
           </button>
 
-          {/* PL Opening Balance Calculator */}
+          {/* PL Opening Balance */}
           <button
             onClick={() => {
               onSelectTab('pl-opening-balance');
@@ -99,7 +112,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             <span className="text-sm font-bold">PL Opening Balance</span>
           </button>
 
-          {/* Standard OT Adjustment Calculator */}
+          {/* Standard OT Adjustment */}
           <button
             onClick={() => {
               onSelectTab('standard-ot-adjustment');
@@ -121,7 +134,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             </div>
           </button>
 
-          {/* Weekend Pay Calculator */}
+          {/* Weekend Split OT */}
           <button
             onClick={() => {
               onSelectTab('weekend-pay');
@@ -138,13 +151,33 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 activeTab === 'weekend-pay' ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-500'
               }`}
             />
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold">Weekend Pay Calculator</span>
-              <span className="px-1.5 py-0.5 bg-orange-600 text-white dark:bg-orange-500 rounded text-[9px] font-bold uppercase">
-                NEW
-              </span>
-            </div>
+            <span className="text-sm font-bold">Weekend Split OT</span>
           </button>
+
+          {/* CALCULATION HISTORY */}
+          {onOpenHistory && (
+            <>
+              <div className="pt-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                History
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenHistory();
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                  <span className="text-sm font-bold">Calculation History</span>
+                </div>
+                <span className="hidden sm:inline-block text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700">
+                  {getDisplayShortcut('history')}
+                </span>
+              </button>
+            </>
+          )}
 
           <div className="pt-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Preferences & Support

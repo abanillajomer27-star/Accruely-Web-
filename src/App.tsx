@@ -317,6 +317,18 @@ export default function App() {
     }
   };
 
+  // Keyboard shortcut (Ctrl+\ or Cmd+\) to toggle sidebar drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+        e.preventDefault();
+        setIsDrawerOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Calculations
   const leaveAccrualResults: LeaveAccrualResults = calculateLeaveAccrual(leaveAccrualInputs);
   const plResults: PLCalculatorResults = calculatePLOpeningBalance(plInputs);
@@ -330,7 +342,6 @@ export default function App() {
         activeTab={activeTab}
         isDrawerOpen={isDrawerOpen}
         onOpenMenu={() => setIsDrawerOpen((prev) => !prev)}
-        onReset={handleResetActiveCalculator}
         onSelectTab={(tab) => setActiveTab(tab)}
       />
 

@@ -430,3 +430,26 @@ export type ActiveTab =
   | 'settings'
   | 'about'
   | 'privacy-policy';
+
+export type CalculatorTabType =
+  | 'leave-accrual'
+  | 'pl-opening-balance'
+  | 'standard-ot-adjustment'
+  | 'weekend-pay';
+
+export interface HistoryKeyMetric {
+  label: string;
+  value: string;
+}
+
+export interface CalculationHistoryItem {
+  id: string;
+  calculatorType: CalculatorTabType;
+  calculatorTitle: string;
+  timestamp: string; // ISO string
+  employeeName: string;
+  summary: string;
+  keyMetrics: HistoryKeyMetric[];
+  inputs: LeaveAccrualInputs | PLCalculatorInputs | StandardOTAdjustmentInputs | WeekendPayInputs;
+  results: LeaveAccrualResults | PLCalculatorResults | StandardOTAdjustmentResults | WeekendPayResults;
+}

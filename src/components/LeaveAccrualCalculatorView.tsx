@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Pencil,
   Share2,
@@ -8,18 +8,11 @@ import {
   Clock,
   Briefcase,
   Layers,
+  RotateCcw,
+  Calendar,
   ChevronDown,
-  ChevronUp,
-  Info,
-  Sparkles,
   ToggleLeft,
   ToggleRight,
-  FileText,
-  Copy,
-  Printer,
-  X,
-  Check,
-  Calendar,
 } from 'lucide-react';
 import {
   LeaveAccrualInputs,
@@ -29,9 +22,9 @@ import {
 } from '../types';
 import {
   formatNum,
-  generateLeaveAccrualStatementText,
 } from '../utils/calculator';
 import { EditFieldModal } from './EditFieldModal';
+import { LeaveAccrualExportModal } from './LeaveAccrualExportModal';
 
 interface LeaveAccrualCalculatorViewProps {
   inputs: LeaveAccrualInputs;
@@ -75,7 +68,31 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
   });
 
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const handleExportEvent = () => setIsExportOpen(true);
+    window.addEventListener('accruely:open-export', handleExportEvent);
+    return () => window.removeEventListener('accruely:open-export', handleExportEvent);
+  }, []);
+
+  const handleReset = () => {
+    onChangeInput(() => ({
+      employeeName: 'John Smith',
+      profile: 'Australian NES Full-Time',
+      payFrequency: 'Fortnightly',
+      standardHoursPerDay: 7.6,
+      totalHoursForPeriod: 76.0,
+      ordinaryHours: 76.0,
+      publicHolidayHours: 0,
+      annualLeaveTaken: 0,
+      personalLeaveTaken: 0,
+      overrideDefaultRates: false,
+      customAnnualLeaveAccrualRate: 0.0769230769,
+      customPersonalLeaveAccrualRate: 0.0384615385,
+      annualLeaveOpeningBalance: 0,
+      personalLeaveOpeningBalance: 0,
+    }));
+  };
 
   const openEditModal = (
     title: string,
@@ -104,7 +121,6 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
       } else if (key === 'standardHoursPerDay') {
         const stdHours = Number(val) || 7.6;
         next.standardHoursPerDay = stdHours;
-        // Optionally update total hours based on pay frequency if user hadn't customized
       } else if (key === 'totalHoursForPeriod') {
         next.totalHoursForPeriod = Number(val) || 0;
       } else if (key === 'ordinaryHours') {
@@ -176,38 +192,22 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
     }));
   };
 
-  const statementText = generateLeaveAccrualStatementText(inputs, results);
-
-  const handleCopyStatement = () => {
-    navigator.clipboard.writeText(statementText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handlePrintStatement = () => {
-    window.print();
-  };
-
   const stdPerDay = inputs.standardHoursPerDay || 7.6;
   const stdPerWeek = stdPerDay * 5;
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* CALCULATOR TITLE CARD */}
-      <div className="bg-white dark:bg-zinc-900 border border-orange-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-orange-100 dark:bg-zinc-800 text-orange-600 dark:text-orange-400 rounded-xl">
-            <Calculator className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              Standard Leave Accrual Calculator
-            </h2>
-            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-              Australian National Employment Standards (NES)
-            </span>
-          </div>
-        </div>
+    <div className="space-y-6 pb-12 animate-fadeIn">
+      {/* TOP ACTIONS / RESET */}
+      <div className="flex justify-end items-center">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-2xs transition-all cursor-pointer shrink-0 hover:text-zinc-900 dark:hover:text-white"
+          title="Reset Leave Accrual Calculator"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Reset</span>
+        </button>
       </div>
 
       {/* 1. EMPLOYEE & PAY RUN DETAILS */}
@@ -741,73 +741,17 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
         </div>
       </div>
 
-      {/* 4. ACTION BUTTON: EXPORT/SHARE */}
+      {/* 4. ACTION BUTTON: CONSOLIDATED EXPORT / SHARE */}
       <div className="flex justify-center pt-2">
         <button
           id="btn-export-share-leave-statement"
+          type="button"
           onClick={() => setIsExportOpen(true)}
           className="flex items-center gap-2.5 px-6 py-3.5 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-bold text-sm sm:text-base transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-98"
         >
           <Share2 className="w-5 h-5 text-orange-100" />
           <span>Export / Share Leave Statement</span>
         </button>
-      </div>
-
-      {/* 5. CALCULATIONS (HOW IT WORKS) SECTION */}
-      <div className="bg-orange-50/70 dark:bg-zinc-900 rounded-2xl shadow-sm border border-orange-200/80 dark:border-zinc-800 overflow-hidden transition-colors">
-        {/* Banner Header */}
-        <div className="bg-orange-600 dark:bg-orange-700 text-white px-5 py-3 font-bold text-base tracking-wider uppercase flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-orange-100" />
-            <span>CALCULATIONS (HOW IT WORKS)</span>
-          </div>
-          <span className="text-xs font-normal normal-case opacity-90 hidden sm:inline">
-            Australian NES Standards
-          </span>
-        </div>
-
-        <div className="p-4 sm:p-5 space-y-4 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
-          <div className="bg-white/90 dark:bg-zinc-800/80 rounded-xl p-4 border border-orange-200/80 dark:border-zinc-700 space-y-2">
-            <div className="font-bold text-orange-950 dark:text-orange-400 flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-orange-600" />
-              <span>Total Paid Hours & Leave Without Pay</span>
-            </div>
-            <ul className="list-disc list-inside space-y-1 pl-1 text-zinc-800 dark:text-zinc-200 font-mono text-xs">
-              <li><strong>Total Paid Hours</strong> = Ordinary Hours + Public Holiday Hours + Annual Leave Taken + Personal Leave Taken</li>
-              <li><strong>Leave Without Pay Hours</strong> = Total Hours For The Pay Period − Total Paid Hours</li>
-            </ul>
-          </div>
-
-          <div className="bg-white/90 dark:bg-zinc-800/80 rounded-xl p-4 border border-orange-200/80 dark:border-zinc-700 space-y-2">
-            <div className="font-bold text-orange-950 dark:text-orange-400 flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-orange-600" />
-              <span>Australian NES Accrual Rates (Internal Precision)</span>
-            </div>
-            <ul className="list-disc list-inside space-y-1 pl-1 text-zinc-800 dark:text-zinc-200 font-mono text-xs">
-              <li>
-                <strong>Australian NES Full-Time Annual Leave Accrual Rate</strong> = 4 weeks ÷ 52 weeks = <span className="font-bold text-orange-600 dark:text-orange-400">0.0769230769</span> hrs per paid hour (1/13)
-              </li>
-              <li>
-                <strong>Australian NES Personal Leave Accrual Rate</strong> = 10 days ÷ 260 working days = <span className="font-bold text-orange-600 dark:text-orange-400">0.0384615385</span> hrs per paid hour (1/26)
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-white/90 dark:bg-zinc-800/80 rounded-xl p-4 border border-orange-200/80 dark:border-zinc-700 space-y-2">
-            <div className="font-bold text-orange-950 dark:text-orange-400 flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-orange-600" />
-              <span>Leave Balances & Accrual Equations</span>
-            </div>
-            <ul className="list-disc list-inside space-y-1 pl-1 text-zinc-800 dark:text-zinc-200 font-mono text-xs">
-              <li><strong>Annual Leave Accrued</strong> = Total Paid Hours × Annual Leave Accrual Rate</li>
-              <li><strong>Available Annual Leave</strong> = Opening Annual Leave Balance + Annual Leave Accrued</li>
-              <li><strong>Closing Annual Leave Balance</strong> = Available Annual Leave − Annual Leave Taken</li>
-              <li className="pt-1"><strong>Personal Leave Accrued</strong> = Total Paid Hours × Personal Leave Accrual Rate</li>
-              <li><strong>Available Personal Leave</strong> = Opening Personal Leave Balance + Personal Leave Accrued</li>
-              <li><strong>Closing Personal Leave Balance</strong> = Available Personal Leave − Personal Leave Taken</li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       {/* EDIT FIELD MODAL */}
@@ -820,64 +764,13 @@ export const LeaveAccrualCalculatorView: React.FC<LeaveAccrualCalculatorViewProp
         onSave={handleSaveModal}
       />
 
-      {/* EXPORT / SHARE LEAVE STATEMENT MODAL */}
-      {isExportOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-fadeIn">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-scaleUp transition-colors border border-orange-200/50 dark:border-zinc-800">
-            {/* Header */}
-            <div className="bg-orange-600 dark:bg-zinc-800 text-white px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-white" />
-                <h3 className="text-lg font-bold">Leave Accrual Statement</h3>
-              </div>
-              <button
-                onClick={() => setIsExportOpen(false)}
-                className="p-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content Preview */}
-            <div className="p-5 flex-1 overflow-y-auto bg-orange-50/50 dark:bg-zinc-900">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 font-medium">
-                Statement Text Preview:
-              </p>
-              <pre className="p-4 bg-zinc-900 text-zinc-100 rounded-xl text-xs font-mono whitespace-pre-wrap leading-relaxed shadow-inner overflow-x-auto select-all border border-zinc-800">
-                {statementText}
-              </pre>
-            </div>
-
-            {/* Actions */}
-            <div className="p-4 bg-orange-100/50 dark:bg-zinc-900 border-t border-orange-200/60 dark:border-zinc-800 flex flex-wrap items-center justify-end gap-3">
-              <button
-                onClick={handlePrintStatement}
-                className="px-4 py-2.5 rounded-xl border border-orange-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-orange-950 dark:text-zinc-200 text-sm font-semibold hover:bg-orange-50 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print</span>
-              </button>
-
-              <button
-                onClick={handleCopyStatement}
-                className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold shadow transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span>Copy Statement</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* CONSOLIDATED EXPORT WORKPAPER MODAL (PDF & EXCEL WITH FORMULAS) */}
+      <LeaveAccrualExportModal
+        isOpen={isExportOpen}
+        inputs={inputs}
+        results={results}
+        onClose={() => setIsExportOpen(false)}
+      />
     </div>
   );
 };

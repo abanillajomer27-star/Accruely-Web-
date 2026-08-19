@@ -1,22 +1,23 @@
 import React from 'react';
-import { Menu, RotateCcw, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, History } from 'lucide-react';
 import { ActiveTab } from '../types';
 import { AccruelyLogo } from './AccruelyLogo';
+import { getDisplayShortcut } from '../utils/shortcuts';
 
 interface HeaderProps {
   activeTab: ActiveTab;
   isDrawerOpen?: boolean;
   onOpenMenu: () => void;
-  onReset: () => void;
   onSelectTab: (tab: ActiveTab) => void;
+  onOpenHistory?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   isDrawerOpen = false,
   onOpenMenu,
-  onReset,
   onSelectTab,
+  onOpenHistory,
 }) => {
   const getTitle = () => {
     switch (activeTab) {
@@ -27,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'standard-ot-adjustment':
         return 'Standard OT Adjustment Calculator';
       case 'weekend-pay':
-        return 'Weekend Pay Calculator';
+        return 'Weekend Split OT Calculator';
       case 'settings':
         return 'Settings & Preferences';
       case 'about':
@@ -51,57 +52,81 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {!isCalculatorTab ? (
             <button
-              onClick={() => onSelectTab('standard-ot-adjustment')}
+              type="button"
+              onClick={() => onSelectTab('leave-accrual')}
               aria-label="Back to calculator"
-              className="p-2 hover:bg-white/15 active:bg-white/25 rounded-xl transition-all flex items-center justify-center cursor-pointer shrink-0 text-white"
+              title="Back to calculator"
+              className="w-8 h-8 rounded-lg bg-white hover:bg-[#FFF3E6] active:bg-orange-100 text-zinc-700 hover:text-orange-950 border border-zinc-200/90 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 dark:hover:bg-zinc-700 transition-all flex items-center justify-center cursor-pointer shrink-0 shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
           ) : (
             <button
+              type="button"
               onClick={onOpenMenu}
-              aria-label={isDrawerOpen ? 'Close sidebar menu' : 'Open sidebar menu'}
+              aria-label={isDrawerOpen ? `Close sidebar (${getDisplayShortcut('toggle-sidebar')})` : `Open sidebar (${getDisplayShortcut('toggle-sidebar')})`}
               aria-expanded={isDrawerOpen}
-              className="p-2 hover:bg-white/15 active:bg-white/25 rounded-xl transition-all flex items-center justify-center cursor-pointer shrink-0 text-white"
+              title={`Toggle sidebar (${getDisplayShortcut('toggle-sidebar')})`}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer shrink-0 transition-all duration-150 shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+                isDrawerOpen
+                  ? 'bg-orange-700 dark:bg-orange-600 text-white border border-orange-800 dark:border-orange-500 shadow-inner'
+                  : 'bg-white hover:bg-[#FFF3E6] active:bg-orange-100 text-zinc-700 hover:text-orange-950 border border-zinc-200/90 hover:border-orange-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 dark:hover:bg-zinc-700'
+              }`}
             >
-              <Menu className="w-5 h-5" />
+              {/* Karbon-style compact vertical split sidebar icon */}
+              <svg
+                className="w-4 h-4 transition-colors"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                stroke="currentColor"
+              >
+                <rect
+                  x="1.75"
+                  y="2.25"
+                  width="12.5"
+                  height="11.5"
+                  rx="2.25"
+                  strokeWidth="1.35"
+                />
+                <path
+                  d="M5.75 2.5V13.5"
+                  strokeWidth="1.35"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
           )}
 
           {/* Accruely App Logo / Icon */}
           <div
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white shadow-xs p-1"
+            className="w-8 h-8 rounded-lg bg-white/15 dark:bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white shadow-xs p-1"
             title="Accruely"
           >
             <AccruelyLogo className="w-full h-full text-white" />
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white leading-tight truncate">
+            <h1 className="text-sm sm:text-base font-bold tracking-tight text-white leading-tight truncate">
               {getTitle()}
             </h1>
-            {isCalculatorTab && (
-              <p className="text-[11px] text-orange-200 dark:text-zinc-400 font-medium truncate">
-                {activeTab === 'pl-opening-balance'
-                  ? 'Dual Entitlement & Xero Reconciler'
-                  : activeTab === 'standard-ot-adjustment'
-                  ? 'Prorated Standard OT for LWOP'
-                  : activeTab === 'weekend-pay'
-                  ? 'Penalty Rates & Total Weekend Pay'
-                  : 'Pay Run & Period Accruals'}
-              </p>
-            )}
           </div>
         </div>
 
-        {isCalculatorTab && (
-          <button
-            onClick={onReset}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white text-xs sm:text-sm font-semibold rounded-full shadow-sm transition-all active:scale-95 cursor-pointer whitespace-nowrap ml-2 shrink-0"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
+        {/* Right Action: History Button */}
+        {onOpenHistory && isCalculatorTab && (
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            <button
+              type="button"
+              onClick={onOpenHistory}
+              aria-label={`Open calculation history (${getDisplayShortcut('history')})`}
+              title={`Calculation History (${getDisplayShortcut('history')})`}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 border border-white/25 text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+            >
+              <History className="w-4 h-4 text-white" />
+              <span className="hidden sm:inline">History</span>
+            </button>
+          </div>
         )}
       </div>
     </header>

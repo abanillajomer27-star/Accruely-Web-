@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { User, Calculator, Scale, Clock, ShieldCheck, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  User,
+  Calculator,
+  Scale,
+  Clock,
+  ShieldCheck,
+  DollarSign,
+  ChevronDown,
+  ChevronUp,
+  Keyboard,
+} from 'lucide-react';
 import { AccruelyLogo } from './AccruelyLogo';
 
 export const AboutView: React.FC = () => {
@@ -60,6 +70,62 @@ export const AboutView: React.FC = () => {
         </div>
       </div>
 
+      {/* KEYBOARD SHORTCUTS REFERENCE */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
+        <div className="flex items-center gap-2.5 text-orange-600 dark:text-orange-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <Keyboard className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
+            Keyboard Shortcuts
+          </h3>
+        </div>
+
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Accelerate your payroll review workflow with built-in productivity shortcuts designed for bookkeepers and accountants:
+        </p>
+
+        <div className="overflow-x-auto border border-zinc-200/80 dark:border-zinc-800 rounded-xl">
+          <table className="w-full text-left text-xs sm:text-sm">
+            <thead className="bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 font-semibold border-b border-zinc-200/80 dark:border-zinc-800">
+              <tr>
+                <th className="py-2.5 px-3 sm:px-4">Action</th>
+                <th className="py-2.5 px-3 sm:px-4">Windows / Linux</th>
+                <th className="py-2.5 px-3 sm:px-4">macOS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200">
+              <tr>
+                <td className="py-2.5 px-3 sm:px-4 font-medium">Toggle navigation</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">Ctrl + \</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">⌘ + \</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 sm:px-4 font-medium">Calculate</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">Ctrl + Enter</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">⌘ + Enter</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 sm:px-4 font-medium">Reset calculator</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">Ctrl + Shift + R</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">⌘ + Shift + R</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 sm:px-4 font-medium">Open History</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">Ctrl + Shift + H*</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">⌘ + Shift + H*</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 sm:px-4 font-medium">Export</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">Ctrl + Shift + E</td>
+                <td className="py-2.5 px-3 sm:px-4 font-mono font-semibold text-orange-700 dark:text-orange-400">⌘ + Shift + E</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 italic">
+          * Uses the safe shortcut Ctrl/⌘ + Shift + H to prevent interfering with your browser&apos;s native history menu.
+        </p>
+      </div>
+
       {/* FAIR WORK & NATIONAL EMPLOYMENT STANDARDS REFERENCE */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors">
         <div className="flex items-center gap-2.5 text-emerald-600 dark:text-emerald-400 border-b border-zinc-100 dark:border-zinc-800 pb-3">
@@ -94,11 +160,8 @@ export const AboutView: React.FC = () => {
             <Scale className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
             <div className="min-w-0">
               <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
-                PL Opening Balance Calculator & Xero Checker
+                PL Opening Balance Calculator
               </h3>
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                Dual Entitlement & Xero Reconciler
-              </p>
             </div>
           </div>
           <button
@@ -167,11 +230,8 @@ export const AboutView: React.FC = () => {
             <Calculator className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
             <div className="min-w-0">
               <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
-                Standard Leave Accrual Calculator
+                Leave Accrual Calculator
               </h3>
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                Pay Run & Period Accruals
-              </p>
             </div>
           </div>
           <button
@@ -216,9 +276,6 @@ export const AboutView: React.FC = () => {
               <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
                 Standard OT Adjustment Calculator
               </h3>
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                Prorated Standard OT for LWOP
-              </p>
             </div>
           </div>
           <button
@@ -270,18 +327,15 @@ export const AboutView: React.FC = () => {
         )}
       </div>
 
-      {/* 4. WEEKEND PAY CALCULATOR EXPLANATION */}
+      {/* 4. WEEKEND SPLIT OT CALCULATOR EXPLANATION */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-zinc-200/80 dark:border-zinc-800 transition-colors">
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5 min-w-0">
             <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
             <div className="min-w-0">
               <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 truncate">
-                Weekend Pay Calculator
+                Weekend Split OT Calculator
               </h3>
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                Penalty Rates & Shift Pay
-              </p>
             </div>
           </div>
           <button
