@@ -73,3 +73,27 @@ export const getDisplayShortcut = (id: string): string => {
   if (!shortcut) return '';
   return isMacOS() ? shortcut.macKey : shortcut.windowsKey;
 };
+
+export const isShortcutMatch = (
+  e: KeyboardEvent,
+  actionId: 'toggle-sidebar' | 'calculate' | 'reset' | 'history' | 'export'
+): boolean => {
+  const isMod = e.ctrlKey || e.metaKey;
+  if (!isMod) return false;
+
+  switch (actionId) {
+    case 'toggle-sidebar':
+      return e.key === '\\' && !e.shiftKey && !e.altKey;
+    case 'calculate':
+      return e.key === 'Enter' && !e.shiftKey && !e.altKey;
+    case 'reset':
+      return (e.key === 'R' || e.key === 'r') && e.shiftKey && !e.altKey;
+    case 'history':
+      return (e.key === 'H' || e.key === 'h') && e.shiftKey && !e.altKey;
+    case 'export':
+      return (e.key === 'E' || e.key === 'e') && e.shiftKey && !e.altKey;
+    default:
+      return false;
+  }
+};
+

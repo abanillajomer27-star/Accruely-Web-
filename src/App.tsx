@@ -10,6 +10,8 @@ import {
   WeekendPayResults,
   SettingsPreferences,
   ActiveTab,
+  CalculationHistoryItem,
+  CalculatorTabType,
 } from './types';
 import {
   calculateLeaveAccrual,
@@ -17,8 +19,20 @@ import {
   calculateStandardOTAdjustment,
   calculateWeekendPay,
 } from './utils/calculator';
+import {
+  loadHistory,
+  addHistoryItem,
+  deleteHistoryItem,
+  clearCalculatorHistory,
+  buildLeaveAccrualHistory,
+  buildPLOpeningBalanceHistory,
+  buildStandardOTHistory,
+  buildWeekendPayHistory,
+} from './utils/history';
+import { isShortcutMatch } from './utils/shortcuts';
 import { Header } from './components/Header';
 import { NavigationDrawer } from './components/NavigationDrawer';
+import { HistoryModal } from './components/HistoryModal';
 import { LeaveAccrualCalculatorView } from './components/LeaveAccrualCalculatorView';
 import { PLOpeningBalanceCalculatorView } from './components/PLOpeningBalanceCalculatorView';
 import { StandardOTAdjustmentCalculatorView } from './components/StandardOTAdjustmentCalculatorView';
@@ -197,6 +211,11 @@ export default function App() {
     return DEFAULT_SETTINGS;
   });
 
+  // History & Shortcuts state
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<CalculationHistoryItem[]>(() => loadHistory());
+  const [shortcutFeedback, setShortcutFeedback] = useState<string | null>(null);
+
   // Save to localStorage
   useEffect(() => {
     localStorage.setItem('accruely_leave_accrual_inputs', JSON.stringify(leaveAccrualInputs));
@@ -317,24 +336,169 @@ export default function App() {
     }
   };
 
-  // Keyboard shortcut (Ctrl+\ or Cmd+\) to toggle sidebar drawer
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
-        e.preventDefault();
-        setIsDrawerOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   // Calculations
   const leaveAccrualResults: LeaveAccrualResults = calculateLeaveAccrual(leaveAccrualInputs);
   const plResults: PLCalculatorResults = calculatePLOpeningBalance(plInputs);
   const standardOTResults: StandardOTAdjustmentResults =
     calculateStandardOTAdjustment(standardOTInputs);
   const weekendPayResults: WeekendPayResults = calculateWeekendPay(weekendPayInputs);
+
+  // Save active calculation snapshot into History
+  const saveCurrentCalculatorToHistory = (showToast = true) => {
+    let newItem: Omit<CalculationHistoryItem, 'id' | 'timestamp'> | null = null;
+
+    if (activeTab === 'leave-accrual') {
+      newItem = buildLeaveAccrualHistory(leaveAccrualInputs, leaveAccrualResults);
+    } else if (activeTab === 'pl-opening-balance') {
+      newItem = buildPLOpeningBalanceHistory(plInputs, plResults);
+    } else if (activeTab === 'standard-ot-adjustment') {
+      newItem = buildStandardOTHistory(standardOTInputs, standardOTResults);
+    } else if (activeTab === 'weekend-pay') {
+      newItem = buildWeekendPayHistory(weekendPayInputs, weekendPayResults);
+    }
+
+    if (newItem) {
+      const updated = addHistoryItem(newItem);
+      setHistory(updated);
+      if (showToast) {
+        setShortcutFeedback('Saved calculation to history');
+        setTimeout(() => setShortcutFeedback(null), 2500);
+      }
+    }
+  };
+
+  // Restore calculation from History
+  const handleRestoreCalculation = (item: CalculationHistoryItem) => {
+    if (item.calculatorType === 'leave-accrual') {
+      setLeaveAccrualInputs(item.inputs as LeaveAccrualInputs);
+      setActiveTab('leave-accrual');
+    } else if (item.calculatorType === 'pl-opening-balance') {
+      setPlInputs(item.inputs as PLCalculatorInputs);
+      setActiveTab('pl-opening-balance');
+    } else if (item.calculatorType === 'standard-ot-adjustment') {
+      setStandardOTInputs(item.inputs as StandardOTAdjustmentInputs);
+      setActiveTab('standard-ot-adjustment');
+    } else if (item.calculatorType === 'weekend-pay') {
+      setWeekendPayInputs(item.inputs as WeekendPayInputs);
+      setActiveTab('weekend-pay');
+    }
+    setIsHistoryOpen(false);
+    setShortcutFeedback(`Restored ${item.calculatorTitle}`);
+    setTimeout(() => setShortcutFeedback(null), 2500);
+  };
+
+  const handleDeleteHistoryItem = (id: string) => {
+    const updated = deleteHistoryItem(id);
+    setHistory(updated);
+  };
+
+  const handleClearHistory = (type?: CalculatorTabType | 'all') => {
+    const updated = clearCalculatorHistory(type);
+    setHistory(updated);
+  };
+
+  // Debounced auto-save calculation to history when inputs change
+  useEffect(() => {
+    const isCalculator =
+      activeTab === 'leave-accrual' ||
+      activeTab === 'pl-opening-balance' ||
+      activeTab === 'standard-ot-adjustment' ||
+      activeTab === 'weekend-pay';
+
+    if (!isCalculator) return;
+
+    const timer = setTimeout(() => {
+      let item: Omit<CalculationHistoryItem, 'id' | 'timestamp'> | null = null;
+      if (activeTab === 'leave-accrual') {
+        item = buildLeaveAccrualHistory(leaveAccrualInputs, leaveAccrualResults);
+      } else if (activeTab === 'pl-opening-balance') {
+        item = buildPLOpeningBalanceHistory(plInputs, plResults);
+      } else if (activeTab === 'standard-ot-adjustment') {
+        item = buildStandardOTHistory(standardOTInputs, standardOTResults);
+      } else if (activeTab === 'weekend-pay') {
+        item = buildWeekendPayHistory(weekendPayInputs, weekendPayResults);
+      }
+
+      if (item) {
+        const updated = addHistoryItem(item);
+        setHistory(updated);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [
+    activeTab,
+    leaveAccrualInputs,
+    plInputs,
+    standardOTInputs,
+    weekendPayInputs,
+  ]);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle sidebar: Ctrl + \ or Cmd + \
+      if (isShortcutMatch(e, 'toggle-sidebar')) {
+        e.preventDefault();
+        setIsDrawerOpen((prev) => !prev);
+        return;
+      }
+
+      // Open History: Ctrl + Shift + H or Cmd + Shift + H
+      if (isShortcutMatch(e, 'history')) {
+        e.preventDefault();
+        setIsHistoryOpen((prev) => !prev);
+        return;
+      }
+
+      // Reset active calculator: Ctrl + Shift + R or Cmd + Shift + R
+      if (isShortcutMatch(e, 'reset')) {
+        e.preventDefault();
+        handleResetActiveCalculator();
+        setShortcutFeedback('Reset current calculator');
+        setTimeout(() => setShortcutFeedback(null), 2500);
+        return;
+      }
+
+      // Calculate / Save snapshot: Ctrl + Enter or Cmd + Enter
+      if (isShortcutMatch(e, 'calculate')) {
+        e.preventDefault();
+        saveCurrentCalculatorToHistory(true);
+        return;
+      }
+
+      // Export: Ctrl + Shift + E or Cmd + Shift + E
+      if (isShortcutMatch(e, 'export')) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('accruely:open-export'));
+        return;
+      }
+
+      // Escape key to close open modals or sidebar
+      if (e.key === 'Escape') {
+        if (isHistoryOpen) {
+          setIsHistoryOpen(false);
+        } else if (isDrawerOpen) {
+          setIsDrawerOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isHistoryOpen,
+    isDrawerOpen,
+    activeTab,
+    leaveAccrualInputs,
+    leaveAccrualResults,
+    plInputs,
+    plResults,
+    standardOTInputs,
+    standardOTResults,
+    weekendPayInputs,
+    weekendPayResults,
+  ]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#121212] text-zinc-900 dark:text-zinc-100 font-sans flex flex-col antialiased transition-colors duration-200">
@@ -343,6 +507,7 @@ export default function App() {
         isDrawerOpen={isDrawerOpen}
         onOpenMenu={() => setIsDrawerOpen((prev) => !prev)}
         onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenHistory={() => setIsHistoryOpen(true)}
       />
 
       <NavigationDrawer
@@ -350,9 +515,37 @@ export default function App() {
         activeTab={activeTab}
         onClose={() => setIsDrawerOpen(false)}
         onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenHistory={() => setIsHistoryOpen(true)}
       />
 
-      <main className="flex-1 w-full max-w-xl mx-auto px-3.5 sm:px-4 pt-4 sm:pt-6">
+      <HistoryModal
+        isOpen={isHistoryOpen}
+        activeCalculatorTab={
+          activeTab === 'leave-accrual' ||
+          activeTab === 'pl-opening-balance' ||
+          activeTab === 'standard-ot-adjustment' ||
+          activeTab === 'weekend-pay'
+            ? activeTab
+            : 'leave-accrual'
+        }
+        history={history}
+        onClose={() => setIsHistoryOpen(false)}
+        onRestore={handleRestoreCalculation}
+        onDelete={handleDeleteHistoryItem}
+        onClearHistory={handleClearHistory}
+      />
+
+      {/* Floating shortcut feedback toast */}
+      {shortcutFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fadeIn pointer-events-none">
+          <div className="px-4 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-semibold shadow-lg border border-zinc-700/80 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{shortcutFeedback}</span>
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         {activeTab === 'leave-accrual' && (
           <LeaveAccrualCalculatorView
             inputs={leaveAccrualInputs}
@@ -403,32 +596,37 @@ export default function App() {
 
       {/* Website Footer */}
       <footer className="mt-auto py-5 border-t border-zinc-200/80 dark:border-zinc-800 text-center text-xs text-zinc-500 dark:text-zinc-400 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xs transition-colors">
-        <div className="max-w-xl mx-auto px-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
-          <span>Accruely • Australian Payroll Tools</span>
-          <span className="text-zinc-300 dark:text-zinc-700">•</span>
-          <button
-            type="button"
-            onClick={() => setActiveTab('privacy-policy')}
-            className={`font-medium transition-colors cursor-pointer ${
-              activeTab === 'privacy-policy'
-                ? 'text-orange-600 dark:text-orange-400 underline underline-offset-2'
-                : 'hover:text-orange-600 dark:hover:text-orange-400'
-            }`}
-          >
-            Privacy Policy
-          </button>
-          <span className="text-zinc-300 dark:text-zinc-700">•</span>
-          <button
-            type="button"
-            onClick={() => setActiveTab('about')}
-            className={`font-medium transition-colors cursor-pointer ${
-              activeTab === 'about'
-                ? 'text-orange-600 dark:text-orange-400 underline underline-offset-2'
-                : 'hover:text-orange-600 dark:hover:text-orange-400'
-            }`}
-          >
-            About
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center sm:justify-between gap-x-4 gap-y-2">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">Accruely</span>
+            <span>•</span>
+            <span>Australian Payroll Tools</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab('privacy-policy')}
+              className={`font-medium transition-colors cursor-pointer ${
+                activeTab === 'privacy-policy'
+                  ? 'text-orange-600 dark:text-orange-400 underline underline-offset-2'
+                  : 'hover:text-orange-600 dark:hover:text-orange-400'
+              }`}
+            >
+              Privacy Policy
+            </button>
+            <span className="text-zinc-300 dark:text-zinc-700">•</span>
+            <button
+              type="button"
+              onClick={() => setActiveTab('about')}
+              className={`font-medium transition-colors cursor-pointer ${
+                activeTab === 'about'
+                  ? 'text-orange-600 dark:text-orange-400 underline underline-offset-2'
+                  : 'hover:text-orange-600 dark:hover:text-orange-400'
+              }`}
+            >
+              About Accruely
+            </button>
+          </div>
         </div>
       </footer>
     </div>

@@ -77,11 +77,11 @@ export const deleteHistoryItem = (id: string): CalculationHistoryItem[] => {
 };
 
 export const clearCalculatorHistory = (
-  type?: CalculatorTabType
+  type?: CalculatorTabType | 'all'
 ): CalculationHistoryItem[] => {
   const current = loadHistory();
   let updated: CalculationHistoryItem[];
-  if (type) {
+  if (type && type !== 'all') {
     updated = current.filter((item) => item.calculatorType !== type);
   } else {
     updated = [];
@@ -160,15 +160,17 @@ export const buildWeekendPayHistory = (
   inputs: WeekendPayInputs,
   results: WeekendPayResults
 ): Omit<CalculationHistoryItem, 'id' | 'timestamp'> => {
-  const empName = inputs.employeeName.trim() || 'Jordan Miller';
+  const empName = inputs.employeeName?.trim() || 'Jordan Miller';
+  const totalHrs = results.totalTimesheetHours || Number(inputs.totalTimesheetHours) || 0;
+  const ruleLabel = inputs.payRule === 'casual' ? 'Casual Shift' : inputs.payRule === 'all-overtime' ? 'All Overtime' : 'Weekly 38h';
   return {
     calculatorType: 'weekend-pay',
     calculatorTitle: 'Weekend Split OT Calculator',
     employeeName: empName,
-    summary: `${empName} • ${formatNum(results.totalHours, 2)} hrs • Gross $${formatNum(results.totalGrossPay, 2)}`,
+    summary: `${empName} • ${formatNum(totalHrs, 2)} hrs • Gross $${formatNum(results.totalGrossPay, 2)}`,
     keyMetrics: [
-      { label: 'Award Rule', value: results.awardRuleName },
-      { label: 'Total Hours', value: `${formatNum(results.totalHours, 2)} hrs` },
+      { label: 'Award Rule', value: ruleLabel },
+      { label: 'Total Hours', value: `${formatNum(totalHrs, 2)} hrs` },
       { label: 'Hourly Rate', value: `$${formatNum(results.ordinaryHourlyRate, 2)}/hr` },
       { label: 'Gross Pay', value: `$${formatNum(results.totalGrossPay, 2)}` },
     ],

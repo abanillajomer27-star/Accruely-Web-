@@ -84,7 +84,7 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
   };
 
   return (
-    <div className="space-y-5 pb-12 animate-fadeIn max-w-4xl mx-auto">
+    <div className="space-y-6 pb-12 animate-fadeIn">
       {/* TOP ACTIONS / RESET */}
       <div className="flex justify-end items-center">
         <button
@@ -98,60 +98,69 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
         </button>
       </div>
 
-      {/* 2. ORIGINAL WEEKEND TIMESHEET */}
-      <DailyTimesheetInput
-        inputs={inputs}
-        results={results}
-        onChangeInput={onChangeInput}
-      />
+      {/* TWO COLUMN RESPONSIVE GRID FOR DESKTOP */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: TIMESHEET & RULE SELECTOR */}
+        <div className="lg:col-span-6 space-y-6">
+          {/* 2. ORIGINAL WEEKEND TIMESHEET */}
+          <DailyTimesheetInput
+            inputs={inputs}
+            results={results}
+            onChangeInput={onChangeInput}
+          />
 
-      {/* 3. APPLICABLE PAY / AWARD RULE */}
-      <PayRuleSelector
-        inputs={inputs}
-        results={results}
-        onChangeInput={onChangeInput}
-      />
+          {/* 3. APPLICABLE PAY / AWARD RULE */}
+          <PayRuleSelector
+            inputs={inputs}
+            results={results}
+            onChangeInput={onChangeInput}
+          />
 
-      {/* 4. CALCULATE ACTION BUTTON */}
-      <div className="flex justify-center pt-1">
-        <button
-          id="calculate-weekend-split-button"
-          type="button"
-          onClick={handleCalculateClick}
-          className="w-full sm:w-auto px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white text-sm font-black rounded-xl shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-        >
-          <Calculator className={`w-4 h-4 ${isCalculating ? 'animate-spin' : ''}`} />
-          <span>CALCULATE SPLIT</span>
-        </button>
-      </div>
+          {/* 4. CALCULATE ACTION BUTTON */}
+          <div className="flex justify-center pt-1">
+            <button
+              id="calculate-weekend-split-button"
+              type="button"
+              onClick={handleCalculateClick}
+              className="w-full px-8 py-3.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-black rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+              <Calculator className={`w-4 h-4 ${isCalculating ? 'animate-spin' : ''}`} />
+              <span>CALCULATE SPLIT</span>
+            </button>
+          </div>
+        </div>
 
-      {/* 5. WEEKEND SPLIT BREAKDOWN */}
-      <div ref={resultsRef}>
-        <WeekendSplitBreakdown
-          inputs={inputs}
-          results={results}
-          onChangeInput={onChangeInput}
-        />
-      </div>
+        {/* RIGHT COLUMN: SPLIT BREAKDOWN & EXPORT */}
+        <div className="lg:col-span-6 space-y-6">
+          {/* 5. WEEKEND SPLIT BREAKDOWN */}
+          <div ref={resultsRef}>
+            <WeekendSplitBreakdown
+              inputs={inputs}
+              results={results}
+              onChangeInput={onChangeInput}
+            />
+          </div>
 
-      {/* 6. ACTION BUTTON: EXPORT / SHARE */}
-      <div className="flex justify-center pt-2">
-        <button
-          type="button"
-          onClick={() => setIsExportOpen(true)}
-          className="flex items-center gap-2.5 px-6 py-3.5 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-bold text-sm sm:text-base transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-98"
-        >
-          <FileText className="w-5 h-5 text-orange-100" />
-          <span>Export / Share Weekend Split</span>
-        </button>
-      </div>
+          {/* 6. ACTION BUTTON: EXPORT / SHARE */}
+          <div className="flex justify-center pt-2">
+            <button
+              type="button"
+              onClick={() => setIsExportOpen(true)}
+              className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-bold text-sm sm:text-base transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-98"
+            >
+              <FileText className="w-5 h-5 text-orange-100" />
+              <span>Export / Share Weekend Split</span>
+            </button>
+          </div>
 
-      {/* 7. IMPORTANT AUSTRALIAN PAYROLL DISCLAIMER */}
-      <div className="p-4 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
-        <p>
-          <strong className="text-zinc-800 dark:text-zinc-200">Notice: </strong>
-          Weekend and overtime entitlements can vary by award, agreement and employment arrangement. Select the applicable rule and verify the result before processing payroll.
-        </p>
+          {/* 7. IMPORTANT AUSTRALIAN PAYROLL DISCLAIMER */}
+          <div className="p-4 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            <p>
+              <strong className="text-zinc-800 dark:text-zinc-200">Notice: </strong>
+              Weekend and overtime entitlements can vary by award, agreement and employment arrangement. Select the applicable rule and verify the result before processing payroll.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 8. EXPORT STATEMENT MODAL */}
