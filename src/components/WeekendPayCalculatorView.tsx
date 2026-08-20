@@ -1,16 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  DollarSign,
   FileText,
   RotateCcw,
-  Calculator,
 } from 'lucide-react';
 import {
   WeekendPayInputs,
   WeekendPayResults,
 } from '../types';
-import { DailyTimesheetInput } from './weekend-pay/DailyTimesheetInput';
-import { PayRuleSelector } from './weekend-pay/PayRuleSelector';
+import { WeekendSplitInputs } from './weekend-pay/WeekendSplitInputs';
 import { WeekendSplitBreakdown } from './weekend-pay/WeekendSplitBreakdown';
 import { WeekendPayExportModal } from './WeekendPayExportModal';
 
@@ -39,41 +36,23 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
 
   const handleResetDefaults = () => {
     onChangeInput(() => ({
-      mode: 'single',
-      w1Monday: '',
-      w1Tuesday: '',
-      w1Wednesday: '',
-      w1Thursday: '',
-      w1Friday: '',
-      w1Saturday: '4.98',
-      w1Sunday: '1.00',
-      w2Monday: '',
-      w2Tuesday: '',
-      w2Wednesday: '',
-      w2Thursday: '',
-      w2Friday: '',
-      w2Saturday: '4.92',
-      w2Sunday: '1.00',
-      saturdayHours: '4.98',
+      employeeName: 'John Smith',
+      payPeriod: 'Fortnightly',
+      selectedRuleId: 'clerks-award',
+      payRule: 'clerks-award',
+      saturdayHours: '3.84',
       sundayHours: '1.00',
-      totalTimesheetHours: '11.90',
-      selectedRuleId: 'casual-loaded',
-      payRule: 'casual-loaded',
-      saturdayCap: '4.14',
-      sundayCap: '4.14',
-      casualShiftCap: '4.14',
-      saturdayConfig: undefined,
-      sundayConfig: undefined,
-      w1SaturdayConfig: undefined,
-      w1SundayConfig: undefined,
-      w2SaturdayConfig: undefined,
-      w2SundayConfig: undefined,
+      w1Saturday: '3.84',
+      w1Sunday: '1.00',
+      totalTimesheetHours: '4.84',
+      ordinaryHourlyRate: '',
+      enablePayCalculation: false,
     }));
   };
 
   const handleCalculateClick = () => {
     setIsCalculating(true);
-    // Force a deterministic trigger/re-evaluation
+    // Force immediate recalculation trigger
     onChangeInput((prev) => ({ ...prev }));
     setTimeout(() => {
       setIsCalculating(false);
@@ -85,7 +64,7 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
 
   return (
     <div className="space-y-6 pb-12 animate-fadeIn">
-      {/* TOP ACTIONS / RESET */}
+      {/* TOP ACTIONS: RESET BUTTON */}
       <div className="flex justify-end items-center">
         <button
           type="button"
@@ -98,41 +77,21 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
         </button>
       </div>
 
-      {/* TWO COLUMN RESPONSIVE GRID FOR DESKTOP */}
+      {/* TWO-COLUMN RESPONSIVE LAYOUT FOR DESKTOP & MOBILE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: TIMESHEET & RULE SELECTOR */}
+        {/* LEFT COLUMN: INPUTS */}
         <div className="lg:col-span-6 space-y-6">
-          {/* 2. ORIGINAL WEEKEND TIMESHEET */}
-          <DailyTimesheetInput
+          <WeekendSplitInputs
             inputs={inputs}
             results={results}
             onChangeInput={onChangeInput}
+            onCalculate={handleCalculateClick}
+            isCalculating={isCalculating}
           />
-
-          {/* 3. APPLICABLE PAY / AWARD RULE */}
-          <PayRuleSelector
-            inputs={inputs}
-            results={results}
-            onChangeInput={onChangeInput}
-          />
-
-          {/* 4. CALCULATE ACTION BUTTON */}
-          <div className="flex justify-center pt-1">
-            <button
-              id="calculate-weekend-split-button"
-              type="button"
-              onClick={handleCalculateClick}
-              className="w-full px-8 py-3.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-black rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-            >
-              <Calculator className={`w-4 h-4 ${isCalculating ? 'animate-spin' : ''}`} />
-              <span>CALCULATE SPLIT</span>
-            </button>
-          </div>
         </div>
 
         {/* RIGHT COLUMN: SPLIT BREAKDOWN & EXPORT */}
         <div className="lg:col-span-6 space-y-6">
-          {/* 5. WEEKEND SPLIT BREAKDOWN */}
           <div ref={resultsRef}>
             <WeekendSplitBreakdown
               inputs={inputs}
@@ -141,8 +100,8 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
             />
           </div>
 
-          {/* 6. ACTION BUTTON: EXPORT / SHARE */}
-          <div className="flex justify-center pt-2">
+          {/* ACTION BUTTON: EXPORT / SHARE */}
+          <div className="flex justify-center pt-1">
             <button
               type="button"
               onClick={() => setIsExportOpen(true)}
@@ -153,17 +112,17 @@ export const WeekendPayCalculatorView: React.FC<WeekendPayCalculatorViewProps> =
             </button>
           </div>
 
-          {/* 7. IMPORTANT AUSTRALIAN PAYROLL DISCLAIMER */}
+          {/* IMPORTANT AUSTRALIAN PAYROLL NOTICE */}
           <div className="p-4 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
             <p>
               <strong className="text-zinc-800 dark:text-zinc-200">Notice: </strong>
-              Weekend and overtime entitlements can vary by award, agreement and employment arrangement. Select the applicable rule and verify the result before processing payroll.
+              Weekend and overtime entitlements can vary by award, agreement and employment arrangement. Select the applicable award rule and verify the resulting split before processing payroll.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 8. EXPORT STATEMENT MODAL */}
+      {/* EXPORT WORKPAPER MODAL */}
       <WeekendPayExportModal
         isOpen={isExportOpen}
         inputs={inputs}

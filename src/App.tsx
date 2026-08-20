@@ -91,21 +91,17 @@ const DEFAULT_STANDARD_OT_INPUTS: StandardOTAdjustmentInputs = {
 };
 
 const DEFAULT_WEEKEND_PAY_INPUTS: WeekendPayInputs = {
-  mode: 'single',
-  saturdayHours: '4.98',
+  employeeName: 'John Smith',
+  payPeriod: 'Fortnightly',
+  selectedRuleId: 'clerks-award',
+  payRule: 'clerks-award',
+  saturdayHours: '3.84',
   sundayHours: '1.00',
-  totalTimesheetHours: '5.98',
-  totalHoursWorked: '5.98',
-  dayWorked: 'Weekend',
-  selectedRuleId: 'casual-loaded',
-  payRule: 'casual-loaded',
-  saturdayCap: '4.14',
-  sundayCap: '4.14',
-  casualShiftCap: '4.14',
-  splitMode: 'automatic',
-  ordinaryHourlyRate: 45.0,
-  enablePayCalculation: true,
-  payrollAmount: '',
+  w1Saturday: '3.84',
+  w1Sunday: '1.00',
+  totalTimesheetHours: '4.84',
+  ordinaryHourlyRate: '',
+  enablePayCalculation: false,
 };
 
 const DEFAULT_SETTINGS: SettingsPreferences = {

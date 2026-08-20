@@ -1,382 +1,249 @@
-import { PayrollCategoryItem } from '../types';
-
-export interface RuleTierConfig {
-  name: string;
-  multiplier: number;
-  ratePercentage: number;
-  capHours?: number | null;
-  isRemaining?: boolean;
-}
-
-export interface AwardPayRule {
+export interface AwardOvertimeRule {
   id: string;
   name: string;
+  shortName: string;
   badge: string;
-  employeeType: 'Casual' | 'Full-Time / Part-Time' | 'Award Specific' | 'General' | 'Custom';
-  calculationPeriod: 'Daily Shift' | 'Weekly Threshold' | 'Fortnightly' | 'Award Cycle';
+  industry: string;
   description: string;
-  exampleScenario?: string;
-  
-  // Saturday Rule
   saturday: {
-    defaultCap?: number | null;
-    capLabel?: string;
-    tiers: RuleTierConfig[];
+    firstThresholdHours: number | null; // e.g. 3.0 (null if flat rate)
+    firstMultiplier: number; // e.g. 1.5
+    firstLabel: string; // e.g. "1.5x (Time and a half)"
+    firstRatePercentage: number; // 150
+    secondMultiplier?: number; // e.g. 2.0
+    secondLabel?: string; // e.g. "2.0x (Double time)"
+    secondRatePercentage?: number; // 200
   };
-
-  // Sunday Rule
   sunday: {
-    defaultCap?: number | null;
-    capLabel?: string;
-    tiers: RuleTierConfig[];
+    firstThresholdHours?: number | null;
+    firstMultiplier: number; // e.g. 2.0
+    firstLabel: string; // e.g. "2.0x (Double time)"
+    firstRatePercentage: number; // 200
+    secondMultiplier?: number;
+    secondLabel?: string;
+    secondRatePercentage?: number;
   };
-
-  allowCustomThreshold?: boolean;
 }
 
-export const AUSTRALIAN_AWARD_RULES: AwardPayRule[] = [
-  {
-    id: 'casual-loaded',
-    name: 'Casual Employee — Shift Ordinary Cap & Overtime',
-    badge: 'Casual / Loaded',
-    employeeType: 'Casual',
-    calculationPeriod: 'Daily Shift',
-    description: 'Casual Hours (incl loading) up to the shift cap (e.g. 4.14h); remaining weekend hours allocate to Casual Overtime (first 3 hours) @ 1.5x.',
-    exampleScenario: 'Jordan Miller: 4.98h Sat → 4.14h Casual Hours + 0.84h Casual OT 1.5x',
-    allowCustomThreshold: true,
-    saturday: {
-      defaultCap: 4.14,
-      capLabel: 'Casual Shift Cap (Sat)',
-      tiers: [
-        {
-          name: 'Casual Hours (incl loading)',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 4.14,
-        },
-        {
-          name: 'Casual Overtime (first 3 hours)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-    sunday: {
-      defaultCap: 4.14,
-      capLabel: 'Casual Shift Cap (Sun)',
-      tiers: [
-        {
-          name: 'Casual Hours (incl loading)',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 4.14,
-        },
-        {
-          name: 'Casual Overtime (first 3 hours)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-  },
-  {
-    id: 'fulltime-capacity',
-    name: 'Full-Time / Part-Time — Ordinary Capacity & Overtime 1.5x',
-    badge: 'Permanent / Threshold',
-    employeeType: 'Full-Time / Part-Time',
-    calculationPeriod: 'Weekly Threshold',
-    description: 'Allocates ordinary hours up to the available threshold (e.g. 2.11h for Saturday, 0.69h for Sunday); excess hours allocate to Overtime 1.5x.',
-    exampleScenario: 'Casey Morgan: 4.92h Sat → 2.11h Ordinary + 2.81h Overtime 1.5x',
-    allowCustomThreshold: true,
-    saturday: {
-      defaultCap: 2.11,
-      capLabel: 'Ordinary Capacity (Sat)',
-      tiers: [
-        {
-          name: 'Ordinary Hours',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 2.11,
-        },
-        {
-          name: 'Overtime 1.5x',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-    sunday: {
-      defaultCap: 0.69,
-      capLabel: 'Ordinary Capacity (Sun)',
-      tiers: [
-        {
-          name: 'Applicable Ordinary Category',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 0.69,
-        },
-        {
-          name: 'Overtime 1.5x',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-  },
-  {
-    id: 'sunday-overtime-split',
-    name: 'Sunday Split — Ordinary Allowance & Overtime 1.5x',
-    badge: 'Sunday Threshold',
-    employeeType: 'Full-Time / Part-Time',
-    calculationPeriod: 'Weekly Threshold',
-    description: 'Allocates up to remaining ordinary capacity (e.g. 0.69h) to Applicable Ordinary Category, and balance to Overtime 1.5x.',
-    exampleScenario: 'Taylor Brooks: 1.00h Sun → 0.69h Applicable Ordinary + 0.31h Overtime 1.5x',
-    allowCustomThreshold: true,
-    saturday: {
-      defaultCap: 2.11,
-      capLabel: 'Ordinary Capacity (Sat)',
-      tiers: [
-        {
-          name: 'Ordinary Hours',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 2.11,
-        },
-        {
-          name: 'Overtime 1.5x',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-    sunday: {
-      defaultCap: 0.69,
-      capLabel: 'Ordinary Capacity (Sun)',
-      tiers: [
-        {
-          name: 'Applicable Ordinary Category',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 0.69,
-        },
-        {
-          name: 'Overtime 1.5x',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-  },
-  {
-    id: 'standard-penalty',
-    name: 'All Weekend Overtime / Penalty Rates (150% Sat / 200% Sun)',
-    badge: '1.5x Sat / 2.0x Sun',
-    employeeType: 'General',
-    calculationPeriod: 'Daily Shift',
-    description: 'Saturday pays 1.5x Saturday Penalty / Overtime. Sunday pays 2.0x Sunday Penalty / Overtime.',
-    allowCustomThreshold: false,
-    saturday: {
-      tiers: [
-        {
-          name: 'Saturday Penalty (1.5x)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
-    },
-    sunday: {
-      tiers: [
-        {
-          name: 'Sunday Penalty (2.0x)',
-          multiplier: 2.0,
-          ratePercentage: 200,
-          isRemaining: true,
-        },
-      ],
-    },
-  },
+export const AUSTRALIAN_AWARD_RULES: AwardOvertimeRule[] = [
   {
     id: 'clerks-award',
-    name: 'Clerks Modern Award — Weekend Overtime (1.5x first 3h, then 2.0x)',
-    badge: 'Clerks Award',
-    employeeType: 'Award Specific',
-    calculationPeriod: 'Daily Shift',
-    description: 'Saturday: First 3 hours at 1.5x, remaining at 2.0x. Sunday: All hours at 2.0x double time.',
-    allowCustomThreshold: true,
+    name: 'Clerks — Private Sector Award 2020',
+    shortName: 'Clerks Award (3h @ 1.5x, then 2.0x | Sun 2.0x)',
+    badge: '1.5x (3h) → 2.0x | Sun 2.0x',
+    industry: 'Administration & Professional',
+    description: 'Saturday: First 3 hours at 1.5x (time & a half), thereafter 2.0x (double time). Sunday: All overtime at 2.0x.',
     saturday: {
-      defaultCap: 3.0,
-      capLabel: 'First Overtime Band (Hours)',
-      tiers: [
-        {
-          name: 'Saturday Overtime 1.5x (first 3 hours)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          capHours: 3.0,
-        },
-        {
-          name: 'Saturday Overtime 2.0x (after 3 hours)',
-          multiplier: 2.0,
-          ratePercentage: 200,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: 3.0,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x (Time & a half)',
+      firstRatePercentage: 150,
+      secondMultiplier: 2.0,
+      secondLabel: '2.0x (Double time)',
+      secondRatePercentage: 200,
     },
     sunday: {
-      tiers: [
-        {
-          name: 'Sunday Overtime 2.0x',
-          multiplier: 2.0,
-          ratePercentage: 200,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
     },
   },
   {
-    id: 'daily-7.6h',
-    name: 'Daily Shift Cap (7.60h Ordinary Shift Threshold)',
-    badge: '7.6h Daily Cap',
-    employeeType: 'Full-Time / Part-Time',
-    calculationPeriod: 'Daily Shift',
-    description: 'First 7.60 hours of each shift allocate to Ordinary Hours; excess hours allocate to Overtime 1.5x.',
-    allowCustomThreshold: true,
+    id: 'construction-award',
+    name: 'Building & Construction General On-Site Award',
+    shortName: 'Building & Construction (2h @ 1.5x, then 2.0x | Sun 2.0x)',
+    badge: '1.5x (2h) → 2.0x | Sun 2.0x',
+    industry: 'Construction & Trades',
+    description: 'Saturday: First 2 hours at 1.5x (time & a half), thereafter 2.0x (double time). Sunday: All overtime at 2.0x.',
     saturday: {
-      defaultCap: 7.6,
-      capLabel: 'Daily Shift Cap (Sat)',
-      tiers: [
-        {
-          name: 'Ordinary Hours',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 7.6,
-        },
-        {
-          name: 'Overtime 1.5x',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: 2.0,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x (Time & a half)',
+      firstRatePercentage: 150,
+      secondMultiplier: 2.0,
+      secondLabel: '2.0x (Double time)',
+      secondRatePercentage: 200,
     },
     sunday: {
-      defaultCap: 7.6,
-      capLabel: 'Daily Shift Cap (Sun)',
-      tiers: [
-        {
-          name: 'Ordinary Hours',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 7.6,
-        },
-        {
-          name: 'Overtime 1.5x',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
+    },
+  },
+  {
+    id: 'hospitality-award',
+    name: 'Hospitality Industry (General) Award 2020',
+    shortName: 'Hospitality Award (2h @ 1.5x, then 2.0x | Sun 2.0x)',
+    badge: '1.5x (2h) → 2.0x | Sun 2.0x',
+    industry: 'Hospitality & Accommodation',
+    description: 'Saturday: First 2 hours at 1.5x overtime, remaining at 2.0x double time. Sunday: All overtime at 2.0x double time.',
+    saturday: {
+      firstThresholdHours: 2.0,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x (Time & a half)',
+      firstRatePercentage: 150,
+      secondMultiplier: 2.0,
+      secondLabel: '2.0x (Double time)',
+      secondRatePercentage: 200,
+    },
+    sunday: {
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
     },
   },
   {
     id: 'retail-award',
-    name: 'General Retail Industry Award — Weekend Work',
-    badge: 'Retail Award',
-    employeeType: 'Award Specific',
-    calculationPeriod: 'Daily Shift',
-    description: 'Saturday ordinary penalty (1.25x) up to 7.6h shift cap + overtime 1.5x. Sunday penalty (1.50x) for ordinary work.',
-    allowCustomThreshold: true,
+    name: 'General Retail Industry Award 2020',
+    shortName: 'General Retail (3h @ 1.5x, then 2.0x | Sun 2.0x)',
+    badge: '1.5x (3h) → 2.0x | Sun 2.0x',
+    industry: 'Retail & Wholesale',
+    description: 'Saturday: First 3 hours at 1.5x overtime, remaining at 2.0x double time. Sunday: All overtime at 2.0x double time.',
     saturday: {
-      defaultCap: 7.6,
-      capLabel: 'Saturday Shift Cap',
-      tiers: [
-        {
-          name: 'Saturday Ordinary Work (1.25x)',
-          multiplier: 1.25,
-          ratePercentage: 125,
-          capHours: 7.6,
-        },
-        {
-          name: 'Saturday Overtime (1.5x)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: 3.0,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x (Time & a half)',
+      firstRatePercentage: 150,
+      secondMultiplier: 2.0,
+      secondLabel: '2.0x (Double time)',
+      secondRatePercentage: 200,
     },
     sunday: {
-      defaultCap: 7.6,
-      capLabel: 'Sunday Shift Cap',
-      tiers: [
-        {
-          name: 'Sunday Ordinary Work (1.50x)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          capHours: 7.6,
-        },
-        {
-          name: 'Sunday Overtime (2.0x)',
-          multiplier: 2.0,
-          ratePercentage: 200,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
+    },
+  },
+  {
+    id: 'manufacturing-award',
+    name: 'Manufacturing & Associated Industries Award',
+    shortName: 'Manufacturing Award (3h @ 1.5x, then 2.0x | Sun 2.0x)',
+    badge: '1.5x (3h) → 2.0x | Sun 2.0x',
+    industry: 'Manufacturing & Engineering',
+    description: 'Saturday: First 3 hours at 1.5x, thereafter 2.0x. Sunday: All overtime at 2.0x.',
+    saturday: {
+      firstThresholdHours: 3.0,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x (Time & a half)',
+      firstRatePercentage: 150,
+      secondMultiplier: 2.0,
+      secondLabel: '2.0x (Double time)',
+      secondRatePercentage: 200,
+    },
+    sunday: {
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
+    },
+  },
+  {
+    id: 'double-time-all',
+    name: 'Double Time Weekend Overtime (All 2.0x)',
+    shortName: 'All Weekend Overtime @ 2.0x (Double Time)',
+    badge: '2.0x Sat & Sun',
+    industry: 'Specialized & Continuous Operations',
+    description: 'All Saturday and Sunday overtime hours are paid at 2.0x (Double time).',
+    saturday: {
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
+    },
+    sunday: {
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
+    },
+  },
+  {
+    id: 'flat-1.5-2.0',
+    name: 'Standard Weekend Overtime (Sat 1.5x / Sun 2.0x)',
+    shortName: 'Flat Weekend OT (Sat 1.5x / Sun 2.0x)',
+    badge: '1.5x Sat / 2.0x Sun',
+    industry: 'General Standard',
+    description: 'All Saturday overtime at flat 1.5x; all Sunday overtime at flat 2.0x.',
+    saturday: {
+      firstThresholdHours: null,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x (Time & a half)',
+      firstRatePercentage: 150,
+    },
+    sunday: {
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x (Double time)',
+      firstRatePercentage: 200,
+    },
+  },
+  {
+    id: 'casual-loaded',
+    name: 'Casual Overtime (+25% Loaded: 1.75x / 2.25x)',
+    shortName: 'Casual Loaded OT (3h @ 1.75x, then 2.25x | Sun 2.25x)',
+    badge: '1.75x (3h) → 2.25x | Sun 2.25x',
+    industry: 'Casual Employment (25% loading)',
+    description: 'Saturday: First 3 hours at 1.75x (150% + 25%), remaining at 2.25x (200% + 25%). Sunday: All overtime at 2.25x.',
+    saturday: {
+      firstThresholdHours: 3.0,
+      firstMultiplier: 1.75,
+      firstLabel: '1.75x (Casual 1.5x + Loading)',
+      firstRatePercentage: 175,
+      secondMultiplier: 2.25,
+      secondLabel: '2.25x (Casual 2.0x + Loading)',
+      secondRatePercentage: 225,
+    },
+    sunday: {
+      firstThresholdHours: null,
+      firstMultiplier: 2.25,
+      firstLabel: '2.25x (Casual Double Time)',
+      firstRatePercentage: 225,
     },
   },
   {
     id: 'custom',
-    name: 'Custom Pay Rule / User Defined Categories',
-    badge: 'Custom',
-    employeeType: 'Custom',
-    calculationPeriod: 'Daily Shift',
-    description: 'Fully customizable category names, caps, and rate multipliers for bookkeeper-specific award requirements.',
-    allowCustomThreshold: true,
+    name: 'Custom Award Overtime Rule',
+    shortName: 'Custom Overtime Rule (User Defined)',
+    badge: 'Custom Split',
+    industry: 'Custom Agreement',
+    description: 'Define custom thresholds and rate multipliers for company-specific EBA or Award requirements.',
     saturday: {
-      defaultCap: 4.0,
-      capLabel: 'Saturday Category 1 Cap',
-      tiers: [
-        {
-          name: 'Category 1 (Base/Ord)',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 4.0,
-        },
-        {
-          name: 'Category 2 (Overtime/Penalty)',
-          multiplier: 1.5,
-          ratePercentage: 150,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: 3.0,
+      firstMultiplier: 1.5,
+      firstLabel: '1.5x Overtime',
+      firstRatePercentage: 150,
+      secondMultiplier: 2.0,
+      secondLabel: '2.0x Overtime',
+      secondRatePercentage: 200,
     },
     sunday: {
-      defaultCap: 4.0,
-      capLabel: 'Sunday Category 1 Cap',
-      tiers: [
-        {
-          name: 'Category 1 (Base/Ord)',
-          multiplier: 1.0,
-          ratePercentage: 100,
-          capHours: 4.0,
-        },
-        {
-          name: 'Category 2 (Overtime/Penalty)',
-          multiplier: 2.0,
-          ratePercentage: 200,
-          isRemaining: true,
-        },
-      ],
+      firstThresholdHours: null,
+      firstMultiplier: 2.0,
+      firstLabel: '2.0x Overtime',
+      firstRatePercentage: 200,
     },
   },
 ];
 
-export function getAwardRuleById(ruleId?: string): AwardPayRule {
+export function getAwardRuleById(ruleId?: string): AwardOvertimeRule {
+  if (!ruleId) return AUSTRALIAN_AWARD_RULES[0];
+  
+  // Normalization for backward compatibility
+  const normalizedId = ruleId.toLowerCase();
+  if (normalizedId.includes('clerk')) return AUSTRALIAN_AWARD_RULES[0];
+  if (normalizedId.includes('construct') || normalizedId.includes('trade')) return AUSTRALIAN_AWARD_RULES[1];
+  if (normalizedId.includes('hospit') || normalizedId.includes('restaur')) return AUSTRALIAN_AWARD_RULES[2];
+  if (normalizedId.includes('retail')) return AUSTRALIAN_AWARD_RULES[3];
+  if (normalizedId.includes('manufac')) return AUSTRALIAN_AWARD_RULES[4];
+  if (normalizedId.includes('double') || normalizedId === 'all-overtime') return AUSTRALIAN_AWARD_RULES[5];
+  if (normalizedId.includes('penalty') || normalizedId.includes('standard') || normalizedId.includes('flat')) return AUSTRALIAN_AWARD_RULES[6];
+  if (normalizedId.includes('casual')) return AUSTRALIAN_AWARD_RULES[7];
+  if (normalizedId.includes('custom')) return AUSTRALIAN_AWARD_RULES[8];
+
   const found = AUSTRALIAN_AWARD_RULES.find((r) => r.id === ruleId);
   return found || AUSTRALIAN_AWARD_RULES[0];
 }

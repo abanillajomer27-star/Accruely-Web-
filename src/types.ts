@@ -127,6 +127,8 @@ export interface StandardOTAdjustmentResults {
 }
 
 // --- WEEKEND PAY CALCULATOR TYPES ---
+export type WeekendPayPeriod = 'Weekly' | 'Fortnightly' | 'Bi-Weekly' | 'Monthly';
+
 export type EmployeeType = 'Full-time' | 'Part-time' | 'Casual' | 'Other / Custom';
 export type DayWorked = 'Saturday' | 'Sunday';
 export type WorkType =
@@ -139,6 +141,18 @@ export type RateTreatment =
   | 'Use one applicable rate'
   | 'Use the higher applicable rate'
   | 'Custom rule';
+
+export interface OvertimeRateSplit {
+  id: string;
+  label: string;
+  rateName: string;
+  multiplier: number;
+  ratePercentage: number;
+  hours: number;
+  hourlyRate?: number;
+  pay?: number;
+  formula?: string;
+}
 
 export interface PayrollCategoryItem {
   id: string;
@@ -220,12 +234,27 @@ export interface WeekendDayConfig {
 }
 
 export interface WeekendPayInputs {
+  // Primary Australian Payroll Overtime Splitting Inputs
+  employeeName?: string;
+  payPeriod?: WeekendPayPeriod | string;
+  selectedRuleId?: string;
+  saturdayHours?: number | string;
+  sundayHours?: number | string;
+
+  // Custom Award Overtime Configuration (if selectedRuleId === 'custom')
+  customSatThreshold?: number | string;
+  customSatFirstMultiplier?: number | string;
+  customSatSecondMultiplier?: number | string;
+  customSunMultiplier?: number | string;
+
+  // Optional Rate Calculation
+  enablePayCalculation?: boolean;
+  ordinaryHourlyRate?: number | string;
+
+  // Backward compatibility fields
   mode?: WeekendCalculatorMode;
-  payPeriod?: 'fortnightly' | 'weekly';
   employmentTypeFilter?: string;
   showWeekdayInputs?: boolean;
-  
-  // Week 1 Fortnightly Entries
   w1Monday?: number | string;
   w1Tuesday?: number | string;
   w1Wednesday?: number | string;
@@ -233,8 +262,6 @@ export interface WeekendPayInputs {
   w1Friday?: number | string;
   w1Saturday?: number | string;
   w1Sunday?: number | string;
-
-  // Week 2 Fortnightly Entries
   w2Monday?: number | string;
   w2Tuesday?: number | string;
   w2Wednesday?: number | string;
@@ -242,23 +269,13 @@ export interface WeekendPayInputs {
   w2Friday?: number | string;
   w2Saturday?: number | string;
   w2Sunday?: number | string;
-
-  // Direct Saturday & Sunday Timesheet Inputs (aliases for single/quick entry)
-  saturdayHours?: number | string;
-  sundayHours?: number | string;
-  selectedRuleId?: string;
   saturdayCap?: string;
   sundayCap?: string;
-
-  totalTimesheetHours: number | string;
+  totalTimesheetHours?: number | string;
   dayWorked?: DayWorked | string;
-  
-  // Weekly / Pay Period entries
   weeklyDays?: DayTimesheetEntry[];
   weeklyOrdinaryThreshold?: number | string;
   useOrdinaryThreshold?: boolean;
-  
-  // Weekend Day-Specific Configurations & Overrides
   payRule?: 'casual' | 'weekly-38h' | 'daily-shift' | 'all-overtime' | 'custom' | string;
   casualShiftCap?: string;
   saturdayConfig?: WeekendDayConfig;
@@ -267,22 +284,11 @@ export interface WeekendPayInputs {
   w1SundayConfig?: WeekendDayConfig;
   w2SaturdayConfig?: WeekendDayConfig;
   w2SundayConfig?: WeekendDayConfig;
-  
-  // Payroll Categories & Allocation
   categories?: PayrollCategoryItem[];
   splitMode?: 'manual' | 'automatic';
-  
-  // Optional Rate Calculation
-  enablePayCalculation?: boolean;
-  ordinaryHourlyRate?: number | string;
-  
-  // Optional comparison
   payrollAmount?: number | null | string;
-
-  // Backward compatibility fields
   totalHoursWorked?: number | string;
   tiers?: SplitTierConfig[];
-  employeeName?: string;
   employeeType?: EmployeeType;
   workType?: WorkType;
   rateTreatment?: RateTreatment;
@@ -335,11 +341,27 @@ export interface DaySplitResult {
 }
 
 export interface WeekendPayResults {
+  // Primary Weekend Overtime Split Results
+  employeeName: string;
+  payPeriod: WeekendPayPeriod | string;
+  awardRuleId: string;
+  awardRuleName: string;
+  awardRuleShortName: string;
+  awardRuleBadge: string;
+  awardRuleDescription: string;
+  saturdayHours: number;
+  sundayHours: number;
+  totalWeekendHours: number;
+  saturdaySplits: OvertimeRateSplit[];
+  sundaySplits: OvertimeRateSplit[];
+  combinedSplits: OvertimeRateSplit[];
+  isReconciled: boolean;
+  reconciledEquation: string;
+
   mode: WeekendCalculatorMode;
   totalTimesheetHours: number;
   totalAllocatedHours: number;
   hoursDifference: number;
-  isReconciled: boolean;
   reconciliationStatus: 'reconciled' | 'under-allocated' | 'over-allocated';
   statusMessage: string;
 
